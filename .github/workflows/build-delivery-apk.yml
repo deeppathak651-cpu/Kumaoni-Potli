@@ -10,11 +10,17 @@ on:
       - main
       - master
 
+env:
+  HTML_FILE: delivery.html
+  APP_NAME: Kumaoni Potli Delivery
+  APP_ID: com.kumaonipotli.delivery
+  OUT_NAME: kumaoni-delivery
+
 permissions:
   contents: read
 
 jobs:
-  build-delivery-apk:
+  build-apk:
     runs-on: ubuntu-latest
     timeout-minutes: 45
 
@@ -33,39 +39,53 @@ jobs:
           distribution: temurin
           java-version: "17"
 
-      - name: Check delivery.html exists
-        run: test -f delivery.html
+      - name: Check html exists
+        run: test -f "$HTML_FILE"
 
       - name: Prepare Capacitor Android app
         shell: bash
-        run: | set -euo pipefail mkdir -p delivery-apk-build/www 
-          # Copy repository assets that delivery.html may reference.
-          rsync -a ./ delivery-apk-build/www/ \
+        run: |
+          set -euo pipefail
+          mkdir -p apk-build/www
+
+          rsync -a ./ apk-build/www/ \
             --exclude='.git/' \
             --exclude='.github/' \
             --exclude='node_modules/' \
-            --exclude='delivery-apk-build/' \
+            --exclude='apk-build/' \
             --exclude='apk-output/' \
             --exclude='android/' \
             --exclude='ios/'
 
-          # Capacitor loads this file as the app's start page.
-          cp delivery.html delivery-apk-build/www/index.html
+          cp "$HTML_FILE" apk-build/www/index.html
 
-          cd delivery-apk-build
+          cd apk-build
           npm init -y
           npm install --no-audit --no-fund @capacitor/core@6.2.1 @capacitor/cli@6.2.1 @capacitor/android@6.2.1
-          npx cap init "Kumaoni Potli Delivery" "com.kumaonipotli.delivery" --web-dir=www
+          npx cap init "$APP_NAME" "$APP_ID" --web-dir=www
           npx cap add android
           npx cap sync android
 
+          M=android/app/src/main/AndroidManifest.xml
+          sed -i 's|</manifest>|    <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION" />\n    <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION" />\n</manifest>|' "$M"
+
       - name: Build debug APK
-        working-directory: delivery-apk-build/android
-        run: | chmod +x gradlew ./gradlew --no-daemon assembleDebug 
-      - name: Upload Delivery APK
+        shell: bash
+        run: |
+          set -euo pipefail
+          cd apk-build/android
+          chmod +x gradlew
+          ./gradlew assembleDebug --no-daemon
+
+      - name: Collect APK
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p apk-output
+          cp apk-build/android/app/build/outputs/apk/debug/app-debug.apk "apk-output/$OUT_NAME.apk"
+
+      - name: Upload APK
         uses: actions/upload-artifact@v4
         with:
-          name: kumaoni-potli-delivery-apk
-          path: delivery-apk-build/android/app/build/outputs/apk/debug/app-debug.apk
-          if-no-files-found: error
-          retention-days: 14
+          name: ${{ env.OUT_NAME }}-apk
+          path: apk-output/${{ env.OUT_NAME }}.apk
