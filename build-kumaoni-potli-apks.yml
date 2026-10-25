@@ -1,0 +1,112 @@
+name: Build Kumaoni Potli APKs
+
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - main
+      - master
+
+permissions:
+  contents: read
+
+jobs:
+  build-apks:
+    name: Build Android APKs for all four panels
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+          cache: ""
+
+      - name: Set up Java
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: "17"
+
+      - name: Build four APKs
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p "$GITHUB_WORKSPACE/apk-output" "$RUNNER_TEMP/kp-build"
+
+          find_panel_file() {
+            local panel="$1"
+            shift
+            local candidate found
+            for candidate in "$@"; do
+              found="$(find "$GITHUB_WORKSPACE" -maxdepth 3 -type f -iname "$candidate" \
+                -not -path '*/.git/*' -not -path '*/node_modules/*' -print -quit)"
+              if [[ -n "$found" ]]; then
+                printf '%s' "$found"
+                return 0
+              fi
+            done
+            echo "ERROR: Could not find the HTML file for the ${panel} panel." >&2
+            echo "Expected one of: $*" >&2
+            return 1
+          }
+
+          build_panel() {
+            local panel="$1"
+            local app_name="$2"
+            local app_id="$3"
+            local source_file="$4"
+            local app_dir="$RUNNER_TEMP/kp-build/$panel"
+
+            echo "::group::Build $panel APK"
+            rm -rf "$app_dir"
+            mkdir -p "$app_dir/www"
+
+            # Copy the repository's web files so local images, scripts, and styles remain available.
+            rsync -a "$GITHUB_WORKSPACE/" "$app_dir/www/" \
+              --exclude='.git/' \
+              --exclude='.github/' \
+              --exclude='node_modules/' \
+              --exclude='apk-output/' \
+              --exclude='android/' \
+              --exclude='ios/'
+
+            cp "$source_file" "$app_dir/www/index.html"
+
+            cd "$app_dir"
+            npm init -y >/dev/null
+            npm install --no-audit --no-fund @capacitor/core@6.2.1 @capacitor/cli@6.2.1 @capacitor/android@6.2.1
+            npx cap init "$app_name" "$app_id" --web-dir=www
+            npx cap add android
+            npx cap sync android
+
+            cd "$app_dir/android"
+            chmod +x gradlew
+            ./gradlew --no-daemon assembleDebug
+
+            cp app/build/outputs/apk/debug/app-debug.apk \
+              "$GITHUB_WORKSPACE/apk-output/kumaoni-potli-$panel-debug.apk"
+            echo "::endgroup::"
+          }
+
+          ADMIN_FILE="$(find_panel_file admin 'admin.html' 'Kumaoni-Potli-admin.html' 'Kumaoni-Potli-Admin.html')"
+          CUSTOMER_FILE="$(find_panel_file customer 'customer.html' 'Kumaoni-Potli-customer.html' 'Kumaoni-Potli-Customer.html')"
+          RESTAURANT_FILE="$(find_panel_file restaurant 'restaurant.html' 'Kumaoni-Potli-restaurant.html' 'Kumaoni-Potli-Restaurant.html')"
+          DELIVERY_FILE="$(find_panel_file delivery 'delivery.html' 'Kumaoni-Potli-delivery.html' 'Kumaoni-Potli-Delivery.html')"
+
+          build_panel admin "Kumaoni Potli Admin" "com.kumaonipotli.admin" "$ADMIN_FILE"
+          build_panel customer "Kumaoni Potli Customer" "com.kumaonipotli.customer" "$CUSTOMER_FILE"
+          build_panel restaurant "Kumaoni Potli Restaurant" "com.kumaonipotli.restaurant" "$RESTAURANT_FILE"
+          build_panel delivery "Kumaoni Potli Delivery" "com.kumaonipotli.delivery" "$DELIVERY_FILE"
+
+      - name: Upload APK files
+        uses: actions/upload-artifact@v4
+        with:
+          name: kumaoni-potli-four-apks
+          path: apk-output/*.apk
+          if-no-files-found: error
+          retention-days: 14
