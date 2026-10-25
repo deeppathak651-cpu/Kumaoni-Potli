@@ -81,10 +81,10 @@ jobs:
             echo "No $ICON_FILE found, using default icon"
             exit 0
           fi
-          sudo apt-get install -y imagemagick
-          mkdir -p apk-build/assets
-          convert "$ICON_FILE" -background white -gravity center -resize 1024x1024 -extent 1024x1024 apk-build/assets/icon-only.png
           cd apk-build
+          mkdir -p assets
+          npm install --no-audit --no-fund sharp
+          node -e "require('sharp')(process.argv[1]).resize(1024,1024,{fit:'contain',background:'#ffffff'}).flatten({background:'#ffffff'}).png().toFile('assets/icon-only.png').then(()=>console.log('icon ok'))" "../$ICON_FILE"
           npx --yes @capacitor/assets@3.0.5 generate --android --iconBackgroundColor '#ffffff'
 
       - name: Build debug APK
