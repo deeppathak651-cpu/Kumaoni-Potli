@@ -1,0 +1,84 @@
+name: Build Kumaoni Potli Admin APK
+
+on:
+  workflow_dispatch:
+  push:
+    paths:
+      - "admin.html"
+      - ".github/workflows/build-admin-apk.yml"
+    branches:
+      - main
+      - master
+
+permissions:
+  contents: read
+
+jobs:
+  build-apk:
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+
+      - name: Set up Java
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: "17"
+
+      - name: Check admin.html exists
+        run: test -f admin.html
+
+      - name: Prepare Capacitor Android app
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p apk-build/www
+
+          # Copy repository assets that the html may reference (logo, images).
+          rsync -a ./ apk-build/www/ \
+            --exclude='.git/' \
+            --exclude='.github/' \
+            --exclude='node_modules/' \
+            --exclude='apk-build/' \
+            --exclude='apk-output/' \
+            --exclude='android/' \
+            --exclude='ios/'
+
+          # Capacitor loads this file as the app's start page.
+          cp admin.html apk-build/www/index.html
+
+          cd apk-build
+          npm init -y
+          npm install --no-audit --no-fund @capacitor/core@6.2.1 @capacitor/cli@6.2.1 @capacitor/android@6.2.1
+          npx cap init "Kumaoni Potli Admin" "com.kumaonipotli.admin" --web-dir=www
+          npx cap add android
+          npx cap sync android
+
+      - name: Build debug APK
+        shell: bash
+        run: |
+          set -euo pipefail
+          cd apk-build/android
+          chmod +x gradlew
+          ./gradlew assembleDebug --no-daemon
+
+      - name: Collect APK
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p apk-output
+          cp apk-build/android/app/build/outputs/apk/debug/app-debug.apk apk-output/kumaoni-admin.apk
+
+      - name: Upload APK
+        uses: actions/upload-artifact@v4
+        with:
+          name: kumaoni-admin-apk
+          path: apk-output/kumaoni-admin.apk
