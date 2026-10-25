@@ -72,7 +72,6 @@ jobs:
           sed -i 's|</manifest>|    <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION" />\n    <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION" />\n</manifest>|' "$M"
 
       - name: Generate app icon
-        continue-on-error: true
         shell: bash
         run: |
           set -euo pipefail
@@ -85,6 +84,7 @@ jobs:
           npm install --no-audit --no-fund sharp
           node -e "require('sharp')(process.argv[1]).resize(1024,1024,{fit:'contain',background:'#ffffff'}).flatten({background:'#ffffff'}).png().toFile('assets/icon-only.png').then(()=>console.log('icon ok'))" "../$ICON_FILE"
           npx --yes @capacitor/assets@3.0.5 generate --android --iconBackgroundColor '#ffffff'
+          rm -rf android/app/src/main/res/mipmap-anydpi-v26
 
       - name: Build debug APK
         shell: bash
@@ -102,7 +102,7 @@ jobs:
           cp apk-build/android/app/build/outputs/apk/debug/app-debug.apk "apk-output/$OUT_NAME.apk"
 
       - name: Upload APK
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
-          name: ${{ env.OUT_NAME }}-apk
           path: apk-output/${{ env.OUT_NAME }}.apk
+          archive: false
