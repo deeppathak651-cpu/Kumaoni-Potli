@@ -1,0 +1,71 @@
+name: Build Kumaoni Potli Customer APK
+
+on:
+  workflow_dispatch:
+  push:
+    paths:
+      - "customer.html"
+      - ".github/workflows/build-customer-apk.yml"
+    branches:
+      - main
+      - master
+
+permissions:
+  contents: read
+
+jobs:
+  build-customer-apk:
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+
+      - name: Set up Java
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: "17"
+
+      - name: Check customer.html exists
+        run: test -f customer.html
+
+      - name: Prepare Capacitor Android app
+        shell: bash
+        run: | set -euo pipefail mkdir -p customer-apk-build/www 
+          # Copy repository assets that customer.html may reference.
+          rsync -a ./ customer-apk-build/www/ \
+            --exclude='.git/' \
+            --exclude='.github/' \
+            --exclude='node_modules/' \
+            --exclude='customer-apk-build/' \
+            --exclude='apk-output/' \
+            --exclude='android/' \
+            --exclude='ios/'
+
+          # Capacitor loads this file as the app's start page.
+          cp customer.html customer-apk-build/www/index.html
+
+          cd customer-apk-build
+          npm init -y
+          npm install --no-audit --no-fund @capacitor/core@6.2.1 @capacitor/cli@6.2.1 @capacitor/android@6.2.1
+          npx cap init "Kumaoni Potli Customer" "com.kumaonipotli.customer" --web-dir=www
+          npx cap add android
+          npx cap sync android
+
+      - name: Build debug APK
+        working-directory: customer-apk-build/android
+        run: | chmod +x gradlew ./gradlew --no-daemon assembleDebug 
+      - name: Upload Customer APK
+        uses: actions/upload-artifact@v4
+        with:
+          name: kumaoni-potli-customer-apk
+          path: customer-apk-build/android/app/build/outputs/apk/debug/app-debug.apk
+          if-no-files-found: error
+          retention-days: 14
