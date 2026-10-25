@@ -1,0 +1,543 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<meta name="theme-color" content="#004d35">
+<title>Kumaoni Potli - Restaurant Panel</title>
+<style>
+:root{
+  --green:#004d35; --green2:#006b49; --deep:#003b2b;
+  --gold:#f7c84b; --gold2:#ffe18a; --white:#fff; --muted:#aeb9b4;
+}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html,body{margin:0;min-height:100%;font-family:Arial,Helvetica,sans-serif;background:#001f17;color:#fff}
+body{display:flex;justify-content:center;overflow-x:hidden}
+.app{
+  width:100%;max-width:430px;min-height:100vh;position:relative;overflow:hidden;
+  background:
+    radial-gradient(circle at 50% 24%,rgba(19,126,83,.34),transparent 28%),
+    linear-gradient(180deg,#003e2c 0%,#004d35 48%,#003b2b 100%);
+}
+.app:before,.app:after{
+  content:"";position:absolute;left:-15%;right:-15%;height:150px;opacity:.22;pointer-events:none;
+  background:linear-gradient(145deg,transparent 35%,#8bb29c 36%,#214f3e 57%,transparent 58%);
+  bottom:0;
+}
+.app:after{bottom:65px;opacity:.13;transform:scaleX(-1)}
+
+.brand{padding:0 18px 0;position:relative;z-index:2;text-align:center}
+.logo{width:min(52%,220px);display:block;margin:0 auto 0;border-radius:24px;filter:drop-shadow(0 10px 18px rgba(0,0,0,.25))}
+.heading{font-size:32px;font-weight:800;line-height:1;margin:3px 0 2px;letter-spacing:-1.5px}
+.sub{font-size:13px;color:#f4f5f4;margin-bottom:6px}
+.form{padding:0 16px;position:relative;z-index:3}
+.field{height:48px;background:#fafafa;border:3px solid var(--gold);border-radius:14px;margin:6px 0;display:flex;align-items:center;padding:0 12px;box-shadow:0 5px 15px rgba(0,0,0,.12)}
+
+.field input{border:0;outline:0;background:transparent;flex:1;font-size:13px;color:#173d31;min-width:0}
+.field input::placeholder{color:#858585}
+
+.options{display:flex;justify-content:space-between;align-items:center;margin:7px 2px 10px;font-size:13px}
+.remember{display:flex;align-items:center;gap:9px}
+.remember input{width:17px;height:17px;accent-color:#20a06a}
+.forgot{color:#ffe06b;font-weight:700;text-decoration:none;cursor:pointer}
+.btn{width:100%;height:48px;border:0;border-radius:34px;background:linear-gradient(90deg,#f3c343,#ffe07b,#f3c343);color:#073d2d;font-size:15px;font-weight:800;box-shadow:0 7px 18px rgba(0,0,0,.2);cursor:pointer}
+.btn:active,.outline:active{transform:scale(.985)}
+
+.or{display:flex;align-items:center;gap:15px;margin:9px 5px 8px;color:#fff;font-size:13px}
+.or span{height:1px;background:rgba(255,255,255,.8);flex:1}
+.question{text-align:center;font-size:13px;margin-bottom:6px}
+.outline{height:45px;border:2px solid var(--gold);border-radius:30px;background:rgba(0,70,48,.25);color:#ffe184;width:82%;margin:0 auto;display:flex;align-items:center;justify-content:center;gap:12px;font-size:13px;font-weight:800;cursor:pointer}
+.footer{position:relative;z-index:2;text-align:center;padding:10px 16px 6px;font-style:italic;color:#fff}
+.footer .leaf{color:#e7cf55;font-size:20px;display:block;line-height:17px}
+.footer .line{display:inline-block;width:28px;height:1px;background:#e7cf55;vertical-align:middle;margin:0 12px}
+.modal{display:none;position:fixed;inset:0;background:rgba(0,0,0,.7);z-index:20;padding:18px;overflow:auto}
+.modal.show{display:block}
+.sheet{max-width:430px;margin:30px auto;background:#f7f8f7;color:#183d31;border-radius:25px;padding:22px;box-shadow:0 20px 50px rgba(0,0,0,.35)}
+.sheet h2{margin:0 0 6px;color:#07523b}
+.sheet p{margin:0 0 18px;color:#66736e}
+.close{float:right;border:0;background:#e8eee9;border-radius:50%;width:30px;height:30px;font-size:20px;cursor:pointer}
+.regfield{margin:11px 0}
+.regfield label{font-size:13px;font-weight:700;color:#315c4c;display:block;margin-bottom:6px}
+.regfield input,.regfield select{width:100%;height:48px;border:1px solid #c9d4cf;border-radius:12px;padding:0 13px;font-size:13px;outline:none;background:#fff}
+.location{display:flex;gap:8px}
+.location button{border:0;border-radius:12px;background:#07523b;color:#fff;padding:0 12px;font-weight:700}
+.note{font-size:12px;color:#68766f;margin-top:6px}
+@media(max-width:390px){.brand{padding-top:0}.logo{width:52%;max-width:220px}.heading{font-size:30px;margin-top:2px}.sub{font-size:13px;margin-bottom:6px}.field{height:46px}.form{padding:0 13px}.btn{height:46px}.outline{width:90%;height:42px;font-size:14px}.options{margin:5px 2px 7px}.or{margin:8px 5px 7px}.footer{padding:7px 10px 4px}} .sub{font-size:13px} .field{height:62px}
+  .btn{height:58px} .outline{width:88%;font-size:13px}
+}
+<style>
+.address-title{font-size:18px;font-weight:800;color:#f4d25b;text-align:center;margin:18px 0 10px;}
+#create .regfield label{display:block;}
+#create input{box-sizing:border-box;width:100%;}
+</style>
+</style>
+
+<style id="restaurant-create-fullpage">
+#create{position:fixed!important;inset:0!important;width:100%!important;height:100%!important;background:var(--bg,#003f32)!important;z-index:9999!important;display:none!important;overflow-y:auto!important;padding:24px 18px 50px!important;box-sizing:border-box!important;align-items:flex-start!important;justify-content:center!important;}
+#create.show{display:flex!important;}
+#create .sheet{width:min(100%,680px)!important;max-height:none!important;overflow:visible!important;background:transparent!important;box-shadow:none!important;border:1px solid rgba(244,210,91,.55)!important;border-radius:28px!important;padding:24px!important;color:#fff!important;box-sizing:border-box!important;}
+#create .close{display:none!important;}
+#create .create-back{display:none!important;}
+#create .sheet h2,#create .sheet > p{text-align:center;}
+#create .sheet h2{font-size:30px;line-height:1.15;margin:4px 0 10px;}
+#create .sheet > p{font-size:15px;line-height:1.45;margin-bottom:18px;}
+#create .name-row{display:grid;grid-template-columns:1fr 1fr;gap:10px;}
+@media(max-width:390px){#create .name-row{gap:8px;} #create .sheet h2{font-size:26px;}}
+
+/* Restaurant create page: always start at the top + centered file picker */
+#create{scroll-behavior:auto!important;}
+#create .sheet{margin:0 auto!important;}
+.file-picker{height:48px;width:100%;border:1px solid #c9d4cf;border-radius:12px;background:#fff;display:flex;align-items:center;justify-content:center;gap:10px;padding:0 10px;overflow:hidden;}
+.file-picker input[type=file]{position:absolute;width:1px;height:1px;opacity:0;pointer-events:none;}
+.file-button{display:flex!important;align-items:center;justify-content:center;height:36px;padding:0 18px;background:#07523b;color:#fff!important;border-radius:9px;font-size:14px!important;font-weight:700!important;margin:0!important;cursor:pointer;white-space:nowrap;}
+.file-name{font-size:12px;color:#68766f;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:48%;}
+
+#create .create-logo{display:block;width:min(42%,190px);max-width:190px;margin:0 auto 14px;border-radius:50%;filter:drop-shadow(0 8px 16px rgba(0,0,0,.22));}
+@media(max-width:390px){#create .create-logo{width:38%;max-width:150px;margin-bottom:10px}}
+</style>
+
+
+<style>
+.terms-link{color:#ffe27a!important;text-decoration:underline;font-weight:800;cursor:pointer;background:none;border:0;padding:0;font:inherit;}
+.terms-overlay{position:fixed;inset:0;background:rgba(0,0,0,.72);display:none;align-items:center;justify-content:center;padding:18px;z-index:9999;}
+.terms-overlay.show{display:flex;}
+.terms-box{width:min(560px,100%);max-height:88vh;overflow:auto;background:#fff;border-radius:22px;padding:24px;color:#164f43;box-shadow:0 20px 60px rgba(0,0,0,.35);}
+.terms-box h2{margin:0 44px 8px 0;font-size:25px;color:#075a46;}
+.terms-box h3{margin:18px 0 6px;color:#075a46;font-size:17px;}
+.terms-box p,.terms-box li{font-size:14px;line-height:1.55;color:#4e5f5b;}
+.terms-close{position:absolute;right:18px;top:15px;border:0;background:#edf2f0;width:38px;height:38px;border-radius:50%;font-size:24px;cursor:pointer;color:#164f43;}
+.terms-head{position:relative;}
+</style>
+
+</head>
+<body>
+<div class="app">
+<section class="brand">
+    <img class="logo" src="restaurant-logo.webp" alt="Kumaoni Potli Restaurant Panel">
+    <div class="heading">Sign In</div>
+    <div class="sub">Welcome to Restaurant Panel</div>
+  </section>
+
+  <main class="form">
+    <div class="field">
+      <input id="email" type="email" placeholder="Email Address" autocomplete="email">
+    </div>
+
+    <div class="field">
+      <input id="password" type="password" placeholder="Password" autocomplete="current-password">
+      
+    </div>
+
+    <div class="options">
+      <label class="remember"><input id="remember" type="checkbox"> <span>Remember Me</span></label>
+      <a class="forgot" onclick="openModal('forgot')">Forgot Password?</a>
+    </div>
+
+    <button class="btn" onclick="signIn()">Sign In</button>
+
+    <div class="or"><span></span><b>OR</b><span></span></div>
+
+    <div class="question">Don’t have an account?</div>
+    <button class="outline" onclick="openCreatePage()">Create Account</button>
+  </main>
+
+  <footer class="footer">
+    
+    <span class="line"></span> Together Serving Happiness <span class="line"></span>
+  </footer>
+</div>
+
+<div class="modal" id="forgot">
+  <div class="sheet">
+    <button class="close" onclick="closeModal('forgot')">×</button>
+    <h2>Forgot Password?</h2>
+    <p>Enter your registered email address. Password reset will be connected to Firebase in the next step.</p>
+    <div class="regfield"><label>Email Address</label><input type="email" placeholder="Enter your email"></div>
+    <button class="btn" style="height:54px" onclick="alert('Password reset will be connected with Firebase.')">Send Reset Link</button>
+  </div>
+</div>
+
+<div id="create">
+  <div class="sheet">
+    <img class="create-logo" src="restaurant-logo.webp" alt="Restaurant Panel Logo">
+    <h2>Create Restaurant Partner Account</h2>
+    <p>Registration details for the Restaurant Panel.</p>
+
+    <div class="name-row">
+      <div class="regfield"><label>First Name</label><input id="rfirst" autocomplete="given-name" placeholder="First Name"></div>
+      <div class="regfield"><label>Last Name</label><input id="rlast" autocomplete="family-name" placeholder="Last Name"></div>
+    </div>
+    <div class="regfield"><label>Mobile Number</label><input id="rphone" type="tel" placeholder="10-digit mobile number"></div>
+    <div class="regfield"><label>Email Address</label><input id="remail" type="email" placeholder="Email Address"></div>
+    <div class="regfield"><label>Password</label><input id="rpass" type="password" placeholder="Create Password" minlength="8" autocomplete="new-password"></div>
+    <div class="regfield"><label>Confirm Password</label><input id="rcpass" type="password" placeholder="Confirm Password" minlength="8" autocomplete="new-password"></div>
+    <div style="font-size:12px;color:#5f6b65;margin-top:-4px;margin-bottom:8px;">Password: minimum 8 characters, with uppercase, lowercase and special character.</div>
+    <div class="address-title">Restaurant Address</div>
+    <div class="regfield"><label>Address Line 1 *</label><input id="address1" autocomplete="street-address" placeholder="House / Flat No. and Street"></div>
+    <div class="regfield"><label>Address Line 2 *</label><input id="address2" autocomplete="address-line2" placeholder="Area / Locality"></div>
+    <div class="regfield"><label>Address Line 3 *</label><input id="address3" autocomplete="address-line3" placeholder="Landmark / Additional Address"></div>
+    <div class="regfield"><label>City / Area *</label><input id="city" autocomplete="address-level2" placeholder="City / Area"></div>
+    <div class="regfield"><label>PIN Code *</label><input id="pin" type="text" inputmode="numeric" pattern="[0-9]{6}" maxlength="6" autocomplete="postal-code" placeholder="6-digit PIN code"></div>
+    <div class="regfield"><label>Current Location</label>
+      <div class="location"><input id="latlng" readonly placeholder="Location not selected"><button type="button" onclick="getLocation()">📍 Use My Current Location</button></div>
+      <div class="note">Use your current GPS location to automatically fill address, city and pincode.</div>
+    </div>
+    <div class="regfield profile-upload">
+      <label>Profile Photo</label>
+      <div class="file-picker">
+        <input id="profilePhoto" type="file" accept="image/*">
+        <label for="profilePhoto" class="file-button">Choose File</label>
+        <span id="fileName" class="file-name">No file selected</span>
+      </div>
+    </div>
+    <label style="display:flex;gap:8px;align-items:flex-start;font-size:13px;margin:15px 0">
+      <input type="checkbox" id="terms" style="margin-top:2px">
+      <span>I agree to the <button type="button" class="terms-link" onclick="openTerms()">Restaurant Partner Terms &amp; Conditions</button> and understand that Admin approval is required.</span>
+    </label>
+
+    <div class="terms-overlay" id="termsOverlay" onclick="if(event.target===this) closeTerms()">
+      <div class="terms-box">
+        <div class="terms-head">
+          <button class="terms-close" type="button" onclick="closeTerms()">×</button>
+          <h2>Restaurant Partner Terms &amp; Conditions</h2>
+          <p>Please read these terms before creating your Restaurant Partner account.</p>
+        </div>
+        <h3>1. Restaurant Information</h3>
+        <p>You must provide accurate and complete restaurant/partner information, including your name, mobile number, email, address, city, pincode and other requested details.</p>
+        <h3>2. Account Responsibility</h3>
+        <p>You are responsible for keeping your account credentials secure and for all activity performed through your account.</p>
+        <h3>3. Admin Approval</h3>
+        <p>Creating an account does not automatically grant Restaurant Panel access. Your account will remain pending until it is reviewed and approved by the Admin.</p>
+        <h3>4. Location &amp; Address</h3>
+        <p>The address and location information provided by you must be correct so that restaurant operations and deliveries can be managed properly.</p>
+        <h3>5. Restaurant Operations</h3>
+        <p>You agree to maintain accurate menu, pricing, availability and order information and to cooperate with the platform for order fulfilment.</p>
+        <h3>6. Prohibited Use</h3>
+        <p>The account must not be used for fraudulent, misleading, unlawful or abusive activity.</p>
+        <h3>7. Suspension or Rejection</h3>
+        <p>The Admin may reject, suspend or disable an account if submitted information is incorrect or if these terms are violated.</p>
+        <h3>8. Acceptance</h3>
+        <p>By ticking the checkbox and selecting “Create Account”, you confirm that you have read, understood and agreed to these Restaurant Partner Terms &amp; Conditions.</p>
+      </div>
+    </div>
+    <button class="btn" style="height:54px" onclick="createAccount()">Create Account</button>
+    <div style="text-align:center;margin-top:16px;color:#fff;font-size:14px;font-weight:700;">Already have an account? <button type="button" onclick="closeCreatePage()" style="border:0;background:none;color:#ffe27a;font-weight:800;font-size:14px;cursor:pointer;padding:0;text-decoration:underline;">Sign In</button></div>
+  </div>
+</div>
+
+<script>
+function togglePassword(){
+  const p=document.getElementById('password');
+  p.type=p.type==='password'?'text':'password';
+}
+function signIn(){
+  const email=document.getElementById('email').value.trim();
+  const pass=document.getElementById('password').value;
+  if(!email || !pass){ alert('Please enter Email Address and Password.'); return; }
+  localStorage.setItem('KumaoniPotliRestaurantEmail',email);
+  alert('Sign In screen ready. Firebase authentication will be connected next.');
+}
+function openModal(id){document.getElementById(id).classList.add('show')}
+function closeModal(id){document.getElementById(id).classList.remove('show')}
+function openCreatePage(){
+  const page=document.getElementById('create');
+  page.classList.add('show');
+  document.body.style.overflow='hidden';
+  page.scrollTop=0;
+  const sheet=page.querySelector('.sheet');
+  if(sheet) sheet.scrollTop=0;
+  requestAnimationFrame(()=>{ page.scrollTop=0; window.scrollTo(0,0); });
+}
+function updateFileName(){
+  const input=document.getElementById('profilePhoto');
+  const name=document.getElementById('fileName');
+  name.textContent=(input.files && input.files.length) ? input.files[0].name : 'No file selected';
+}
+function closeCreatePage(){ document.getElementById('create').classList.remove('show'); document.body.style.overflow=''; }
+function openTerms(){ document.getElementById('termsOverlay').classList.add('show'); }
+function closeTerms(){ document.getElementById('termsOverlay').classList.remove('show'); }
+let locationBusy=false;
+let pinLookupBusy=false;
+let lastPinLookup='';
+
+function setLocationButtonText(text){
+  const btn=document.querySelector('.location button');
+  if(btn) btn.textContent=text;
+}
+
+async function lookupPinCode(){
+  const pinEl=document.getElementById('pin');
+  if(!pinEl || pinLookupBusy) return;
+  const pin=String(pinEl.value||'').replace(/\D/g,'').slice(0,6);
+  pinEl.value=pin;
+  if(pin.length!==6 || pin===lastPinLookup) return;
+
+  pinLookupBusy=true;
+  lastPinLookup=pin;
+  const city=document.getElementById('city');
+  const address2=document.getElementById('address2');
+  const address3=document.getElementById('address3');
+  const out=document.getElementById('latlng');
+
+  try{
+    if(out) out.value='Looking up PIN location…';
+    const res=await fetch('https://api.postalpincode.in/pincode/'+encodeURIComponent(pin),{
+      method:'GET',
+      headers:{'Accept':'application/json'}
+    });
+    if(!res.ok) throw new Error('PIN lookup service unavailable');
+    const data=await res.json();
+    const result=Array.isArray(data)?data[0]:null;
+    const offices=result && Array.isArray(result.PostOffice)?result.PostOffice:[];
+    if(!offices.length){
+      lastPinLookup='';
+      if(out) out.value='';
+      alert('This PIN Code was not found. Please check the 6-digit PIN Code.');
+      return;
+    }
+
+    const po=offices[0]||{};
+    const postName=po.Name||'';
+    const district=po.District||'';
+    const state=po.State||'';
+    const block=po.Block||'';
+    const division=po.Division||'';
+
+    // A PIN code identifies a postal area, not an exact house/GPS position.
+    // Fill the postal-location fields without overwriting manually entered address line 1.
+    if(address2 && !address2.value.trim()) address2.value=postName;
+    if(address3 && !address3.value.trim()) address3.value=[district,state].filter(Boolean).join(', ');
+    if(city) city.value=[district,block].filter(Boolean).join(', ') || district || postName;
+    if(out) out.value='PIN '+pin+' • '+[postName,district,state].filter(Boolean).join(', ');
+
+    alert('PIN Code location found: '+[postName,district,state].filter(Boolean).join(', ')+'. Exact GPS location is not available from a PIN Code alone. Use “Use My Current Location” for GPS coordinates.');
+  }catch(err){
+    lastPinLookup='';
+    if(out) out.value='';
+    alert('PIN Code location could not be loaded. Please check your internet connection or enter the address manually.');
+  }finally{
+    pinLookupBusy=false;
+  }
+}
+
+function resetPinLookupIfChanged(){
+  const pinEl=document.getElementById('pin');
+  if(!pinEl) return;
+  const current=String(pinEl.value||'').replace(/\D/g,'').slice(0,6);
+  if(current!==lastPinLookup) lastPinLookup='';
+}
+
+async function getLocation(){
+  if(locationBusy)return;
+  const out=document.getElementById('latlng');
+  const btn=document.querySelector('.location button');
+  const setStatus=(msg)=>{ if(out) out.value=msg; };
+  if(!navigator.geolocation){
+    alert('This device/browser does not provide GPS location. Please allow Location permission or enter the address manually.');
+    return;
+  }
+  locationBusy=true;
+  if(btn){btn.disabled=true;btn.textContent='📍 Getting Location…';}
+  setStatus('Getting location…');
+  try{
+    if(navigator.permissions && navigator.permissions.query){
+      try{
+        const status=await navigator.permissions.query({name:'geolocation'});
+        if(status.state==='denied') throw new Error('Location permission is blocked. Please allow Location permission for this app/browser in Android Settings and try again.');
+      }catch(e){ if(e && e.message && e.message.startsWith('Location permission is blocked')) throw e; }
+    }
+    const pos=await new Promise((resolve,reject)=>{
+      navigator.geolocation.getCurrentPosition(resolve,reject,{enableHighAccuracy:true,timeout:30000,maximumAge:0});
+    });
+    const lat=Number(pos.coords.latitude), lon=Number(pos.coords.longitude);
+    setStatus(lat.toFixed(6)+', '+lon.toFixed(6));
+    try{
+      const url='https://nominatim.openstreetmap.org/reverse?format=jsonv2&lat='+encodeURIComponent(lat)+'&lon='+encodeURIComponent(lon)+'&zoom=18&addressdetails=1&accept-language=en';
+      const res=await fetch(url,{headers:{'Accept':'application/json'}});
+      if(!res.ok) throw new Error('Address lookup failed');
+      const data=await res.json();
+      const a=data.address||{};
+      const line1=[a.house_number,a.road||a.pedestrian||a.footway].filter(Boolean).join(', ');
+      const line2=[a.neighbourhood,a.suburb,a.quarter].filter(Boolean).join(', ');
+      const line3=[a.landmark,a.amenity,a.hamlet,a.village,a.county,a.state_district].filter(Boolean).join(', ');
+      const address1=document.getElementById('address1');
+      const address2=document.getElementById('address2');
+      const address3=document.getElementById('address3');
+      const city=document.getElementById('city');
+      const pin=document.getElementById('pin');
+      if(address1)address1.value=line1 || data.display_name || '';
+      if(address2)address2.value=line2 || '';
+      if(address3)address3.value=line3 || '';
+      const cityName=a.city||a.town||a.village||a.municipality||a.city_district||a.county||a.state_district||'';
+      if(city)city.value=cityName;
+      const postcode=String(a.postcode||'').replace(/\D/g,'').slice(0,6);
+      if(pin){pin.value=postcode; pin.dispatchEvent(new Event('input',{bubbles:true}));}
+      if(!postcode) {
+        if(btn)btn.textContent='✓ Location Added';
+        alert('Location detected, but PIN Code was not returned by the address service. Please enter the 6-digit PIN Code manually.');
+      } else {
+        if(btn)btn.textContent='✓ Location Added';
+        alert('Current location detected successfully. Address Line 1, 2, 3, City and PIN Code have been filled.');
+      }
+    }catch(geoErr){
+      if(btn)btn.textContent='✓ GPS Added';
+      alert('GPS location was detected, but the address service could not return the address/PIN Code. Please enter Address Line 1, 2, 3 and PIN Code manually.');
+    }
+  }catch(e){
+    setStatus('');
+    let msg='Unable to get current location. ';
+    if(e && e.code===1)msg+='Please allow Location permission in Android Settings and try again.';
+    else if(e && e.code===2)msg+='Please turn ON GPS/Location and try again.';
+    else if(e && e.code===3)msg+='Location request timed out. Turn ON GPS and try again in an open area.';
+    else if(e && e.message)msg=e.message;
+    else msg+='Please check GPS and location permission.';
+    alert(msg);
+    if(btn)btn.textContent='📍 Use My Current Location';
+  }finally{
+    locationBusy=false;
+    if(btn)btn.disabled=false;
+  }
+}
+
+function createAccount(){
+  const fields=['rfirst','rlast','rphone','remail','rpass','rcpass','address1','address2','address3','city','pin'];
+  for(const id of fields){const el=document.getElementById(id);if(!el || !el.value.trim()){alert('Please fill all required details including Address Line 1, Address Line 2, Address Line 3 and PIN Code.');el?.focus();return;}}
+  const pin=document.getElementById('pin').value.replace(/\D/g,'');
+  document.getElementById('pin').value=pin;
+  if(!/^\d{6}$/.test(pin)){alert('Please enter a valid 6-digit PIN Code.');document.getElementById('pin').focus();return;}
+  if(document.getElementById('rpass').value!==document.getElementById('rcpass').value){alert('Password and Confirm Password do not match.');return;}
+  if(!document.getElementById('terms').checked){alert('Please accept Terms & Conditions.');return;}
+  alert('Account form ready. Firebase registration + Admin approval will be connected next.');
+}
+
+const pinInput=document.getElementById('pin');
+if(pinInput){
+  pinInput.addEventListener('input',()=>{
+    pinInput.value=pinInput.value.replace(/\D/g,'').slice(0,6);
+    resetPinLookupIfChanged();
+    if(pinInput.value.length===6) lookupPinCode();
+  });
+  pinInput.addEventListener('blur',()=>{ if(pinInput.value.length===6) lookupPinCode(); });
+}
+document.getElementById('profilePhoto')?.addEventListener('change', updateFileName);
+</script>
+
+<style id="kp-connected-restaurant-css">
+#kpRestaurantDashboard{display:none;min-height:100vh;background:#f5f7f6;color:#10221b;padding-bottom:30px}
+#kpRestaurantDashboard.show{display:block}
+.kpr-head{background:linear-gradient(90deg,#064f33,#087049);color:#fff;padding:16px 18px;display:flex;justify-content:space-between;align-items:center;gap:12px;position:sticky;top:0;z-index:20}
+.kpr-head h2{margin:0;color:#f5cf37;font:800 24px Georgia,serif}.kpr-head small{display:block;color:#fff;margin-top:3px}
+.kpr-logout{width:auto!important;margin:0!important;background:#fff!important;color:#075c3b!important;padding:9px 14px!important;border-radius:10px!important}
+.kpr-wrap{width:min(980px,94%);margin:18px auto}.kpr-grid{display:grid;grid-template-columns:minmax(280px,1fr) minmax(300px,1fr);gap:16px}
+.kpr-card{background:#fff;border:1px solid #dce8e2;border-radius:16px;padding:16px;box-shadow:0 4px 16px #0000000a}.kpr-card h3{margin:0 0 12px;color:#075c3b}
+.kpr-form{display:grid;gap:9px}.kpr-form input,.kpr-form select{width:100%;padding:12px;border:1px solid #ccd9d3;border-radius:10px;font:inherit}.kpr-row{display:grid;grid-template-columns:1fr 1fr;gap:9px}.kpr-btn{width:auto!important;margin:0!important;padding:10px 13px!important}.kpr-food{display:grid;grid-template-columns:62px 1fr auto;gap:10px;align-items:center;border-bottom:1px solid #edf1ef;padding:10px 0}.kpr-food img,.kpr-ph{width:62px;height:62px;border-radius:10px;object-fit:cover;background:#e7eee9;display:grid;place-items:center}.kpr-food h4{margin:0 0 4px}.kpr-meta{font-size:12px;color:#667a72}.kpr-actions{display:flex;gap:6px;flex-wrap:wrap}.kpr-actions button{width:auto!important;margin:0!important;padding:8px 9px!important;font-size:12px}.kpr-status{font-weight:800;color:#08784d}.kpr-order{border:1px solid #e1e8e4;border-radius:12px;padding:12px;margin-bottom:9px}.kpr-order-top{display:flex;justify-content:space-between;gap:8px}.kpr-order-items{font-size:13px;color:#4f615a;margin:8px 0}.kpr-msg{min-height:20px;color:#b42318;font-size:13px}
+@media(max-width:760px){.kpr-grid{grid-template-columns:1fr}.kpr-row{grid-template-columns:1fr}.kpr-food{grid-template-columns:54px 1fr}.kpr-food img,.kpr-ph{width:54px;height:54px}.kpr-actions{grid-column:1/-1}}
+</style>
+<div id="kpRestaurantDashboard">
+  <header class="kpr-head"><div><h2>Kumaoni Potli</h2><small>Restaurant Partner Dashboard</small></div><button class="kpr-logout" onclick="window.kpRestaurantLogout()">Log Out</button></header>
+  <div class="kpr-wrap">
+    <div class="kpr-grid">
+      <section class="kpr-card">
+        <h3>Restaurant Menu</h3>
+        <form id="kprFoodForm" class="kpr-form">
+          <input type="hidden" id="kprFoodId">
+          <input id="kprFoodName" placeholder="Food name" required>
+          <div class="kpr-row"><input id="kprFoodCategory" placeholder="Category" required><input id="kprFoodPrice" type="number" min="0" placeholder="Price" required></div>
+          <input id="kprFoodImage" placeholder="Image URL (optional)">
+          <select id="kprFoodAvailable"><option value="true">Available</option><option value="false">Unavailable</option></select>
+          <div class="kpr-actions"><button class="kpr-btn" type="submit">Save Food</button><button class="kpr-btn" type="button" onclick="kpRestaurantClearFood()">Clear</button></div>
+          <div id="kprFoodMsg" class="kpr-msg"></div>
+        </form>
+        <div id="kprFoods"></div>
+      </section>
+      <section class="kpr-card">
+        <h3>Incoming Orders</h3>
+        <div id="kprOrders"><div class="kpr-meta">Loading orders…</div></div>
+      </section>
+    </div>
+  </div>
+</div>
+<script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-firestore-compat.js"></script>
+<script>
+(function(){
+  const cfg={apiKey:"AIzaSyCEg7bMN7sSIjcAY9Y5csufxb8ZqwJV94k",authDomain:"kumaoni-potli.firebaseapp.com",projectId:"kumaoni-potli",storageBucket:"kumaoni-potli.firebasestorage.app",messagingSenderId:"406250534735",appId:"1:406250534735:web:f5572a92976b03c06ab73a",measurementId:"G-D2PKYKQTPW"};
+  try{if(!firebase.apps.length)firebase.initializeApp(cfg)}catch(e){}
+  const auth=firebase.auth(), db=firebase.firestore(); let unsubFoods=null,unsubOrders=null,me=null;
+  const $=id=>document.getElementById(id), esc=x=>String(x??'').replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+  function msg(t){$("kprFoodMsg").textContent=t||''}
+  function price(f){return Number(f.discountPrice??f.discount??f.regularPrice??f.regular??f.price??0)}
+  function showDash(){document.querySelectorAll('body > .app, body > .wrap, #create, .modal').forEach(e=>{if(e) e.style.display='none'});$('kpRestaurantDashboard').classList.add('show');window.scrollTo(0,0);startData()}
+  function hideDash(){ $('kpRestaurantDashboard').classList.remove('show'); document.querySelectorAll('body > .app').forEach(e=>e.style.display=''); }
+  function renderFoods(s){
+    const box=$('kprFoods'); if(!box)return;
+    if(!s.length){box.innerHTML='<div class="kpr-meta">No food items yet. Add your first item above.</div>';return}
+    box.innerHTML=s.map(x=>`<div class="kpr-food"><div class="${x.imageUrl||x.image?'':'kpr-ph'}">${x.imageUrl||x.image?`<img src="${esc(x.imageUrl||x.image)}">`:'🍲'}</div><div><h4>${esc(x.name)}</h4><div class="kpr-meta">₹${price(x)} · ${esc(x.category||'Kumaoni Special')} · <span class="kpr-status">${x.available===false?'Unavailable':'Available'}</span></div></div><div class="kpr-actions"><button onclick="kpEditFood('${esc(x.id)}')">Edit</button><button onclick="kpToggleFood('${esc(x.id)}')">${x.available===false?'Make Available':'Make Unavailable'}</button></div></div>`).join('');
+  }
+  function renderOrders(s){
+    const box=$('kprOrders'); if(!box)return;
+    if(!s.length){box.innerHTML='<div class="kpr-meta">No orders yet.</div>';return}
+    box.innerHTML=s.map(x=>{const items=(x.items||[]).map(i=>`${esc(i.name||'')} × ${Number(i.quantity??i.qty??1)}`).join(', ');const st=String(x.status||'Pending');return `<div class="kpr-order"><div class="kpr-order-top"><b>#${esc(x.orderId||x.id)}</b><b>${esc(st)}</b></div><div class="kpr-order-items">${items}</div><div class="kpr-meta">Customer: ${esc(x.customerName||'Customer')}<br>Address: ${esc(x.customerAddress||'—')}<br>Total: ₹${Number(x.grandTotal??x.total??0)}</div><div class="kpr-actions" style="margin-top:8px">${['Confirmed','Preparing','Ready','Cancelled'].map(st2=>`<button onclick="kpRestaurantSetStatus('${esc(x.id)}','${st2}')">${st2}</button>`).join('')}</div></div>`}).join('');
+  }
+  function startData(){
+    const u=auth.currentUser;if(!u)return;
+    me=u;
+    if(unsubFoods)unsubFoods(); if(unsubOrders)unsubOrders();
+    unsubFoods=db.collection('foods').where('restaurantId','==',u.uid).onSnapshot(s=>renderFoods(s.docs.map(d=>Object.assign({id:d.id},d.data()))),e=>console.error(e));
+    unsubOrders=db.collection('orders').where('restaurantId','==',u.uid).onSnapshot(s=>renderOrders(s.docs.map(d=>Object.assign({id:d.id},d.data())).sort((a,b)=>String(b.createdAt||'').localeCompare(String(a.createdAt||'')))),e=>console.error(e));
+  }
+  $('kprFoodForm').addEventListener('submit',async e=>{
+    e.preventDefault(); if(!me)return;
+    const id=$('kprFoodId').value.trim()||('food_'+Date.now()), name=$('kprFoodName').value.trim(), category=$('kprFoodCategory').value.trim(), p=Number($('kprFoodPrice').value), image=$('kprFoodImage').value.trim(), available=$('kprFoodAvailable').value==='true';
+    if(!name||!category||!Number.isFinite(p))return msg('Please enter food name, category and valid price.');
+    try{await db.collection('foods').doc(id).set({id,name,category,regular:p,regularPrice:p,discount:0,discountPrice:p,price:p,image,imageUrl:image,restaurantId:me.uid,restaurantName:me.displayName||me.email||'Restaurant',available,status:available?'Available':'Unavailable',updatedAt:firebase.firestore.FieldValue.serverTimestamp()},{merge:true});msg('Food saved.');kpRestaurantClearFood()}catch(err){msg(err.message||'Unable to save food.')}
+  });
+  window.kpRestaurantClearFood=function(){['kprFoodId','kprFoodName','kprFoodCategory','kprFoodPrice','kprFoodImage'].forEach(id=>$(id).value='');$('kprFoodAvailable').value='true';};
+  window.kpEditFood=function(id){db.collection('foods').doc(id).get().then(s=>{const f=s.data()||{};$('kprFoodId').value=id;$('kprFoodName').value=f.name||'';$('kprFoodCategory').value=f.category||'';$('kprFoodPrice').value=price(f);$('kprFoodImage').value=f.imageUrl||f.image||'';$('kprFoodAvailable').value=(f.available!==false)?'true':'false';window.scrollTo(0,0)})};
+  window.kpToggleFood=function(id){db.collection('foods').doc(id).get().then(s=>{const f=s.data()||{};const a=f.available===false;return db.collection('foods').doc(id).update({available:a,status:a?'Available':'Unavailable',updatedAt:firebase.firestore.FieldValue.serverTimestamp()})}).catch(console.error)};
+  window.kpRestaurantSetStatus=function(id,status){db.collection('orders').doc(id).update({status,updatedAt:firebase.firestore.FieldValue.serverTimestamp(),restaurantUpdatedAt:firebase.firestore.FieldValue.serverTimestamp()}).catch(e=>alert(e.message||'Unable to update order'))};
+  window.kpRestaurantLogout=async function(){try{await auth.signOut()}catch(e){}hideDash();document.querySelectorAll('body > .app').forEach(e=>e.style.display='');};
+  const oldSignIn=window.signIn;
+  window.signIn=async function(){
+    const email=$('email').value.trim().toLowerCase(), pass=$('password').value;
+    if(!email||!pass)return alert('Please enter Email Address and Password.');
+    try{
+      const cred=await auth.signInWithEmailAndPassword(email,pass);
+      const snap=await db.collection('users').doc(cred.user.uid).get(), p=snap.exists?snap.data():null;
+      if(!p||String(p.role||'').toLowerCase()!=='restaurant'){await auth.signOut();return alert('This account is not a Restaurant Partner account.');}
+      if(p.status!=='active'){await auth.signOut();return alert('Restaurant account is pending Admin approval or disabled.');}
+      await cred.user.updateProfile({displayName:p.name||cred.user.email||''});
+      showDash();
+    }catch(e){alert(e.message||'Unable to sign in.');}
+  };
+  const oldCreate=window.createAccount;
+  window.createAccount=async function(){
+    const fields=['rfirst','rlast','rphone','remail','rpass','rcpass','address','city','pin'];
+    for(const id of fields){if(!$(id)?.value.trim())return alert('Please fill all required details.');}
+    const password=$('rpass').value;
+    const passwordRule=/^(?=.*[a-z])(?=.*[A-Z])(?=.*[^A-Za-z0-9]).{8,}$/;
+    if(!passwordRule.test(password)){
+      return alert('Password must be at least 8 characters and contain at least one uppercase letter, one lowercase letter, and one special character.');
+    }
+    if(password!==$('rcpass').value)return alert('Password and Confirm Password do not match.');
+    if(!$('terms').checked)return alert('Please accept Terms & Conditions.');
+    try{
+      const first=$('rfirst').value.trim(), last=$('rlast').value.trim();
+      const name=(first+' '+last).trim();
+      const email=$('remail').value.trim().toLowerCase();
+      const cred=await auth.createUserWithEmailAndPassword(email,$('rpass').value);
+      const uid=cred.user.uid;
+      await cred.user.updateProfile({displayName:name});
+      const address=[$('address1').value.trim(),$('address2').value.trim(),$('address3').value.trim()].filter(Boolean).join(', ');
+       const profile={uid,name,firstName:first,lastName:last,phone:$('rphone').value.trim(),email,address,addressLine1:$('address1').value.trim(),addressLine2:$('address2').value.trim(),addressLine3:$('address3').value.trim(),city:$('city').value.trim(),pincode:$('pin').value.trim(),location:$('latlng').value.trim(),role:'restaurant',status:'pending',createdAt:firebase.firestore.FieldValue.serverTimestamp(),updatedAt:firebase.firestore.FieldValue.serverTimestamp()};
+      await db.collection('users').doc(uid).set(profile,{merge:true});
+      await db.collection('restaurants').doc(uid).set({id:uid,name,owner:name,firstName:first,lastName:last,phone:profile.phone,email,address:profile.address,addressLine1:profile.addressLine1,addressLine2:profile.addressLine2,addressLine3:profile.addressLine3,city:profile.city,pincode:profile.pincode,location:profile.location,status:'Inactive',active:false,createdAt:firebase.firestore.FieldValue.serverTimestamp(),updatedAt:firebase.firestore.FieldValue.serverTimestamp()},{merge:true});
+      await auth.signOut();closeCreatePage();alert('Restaurant account created. Admin approval is required before sign in.');$('email').value=email;
+    }catch(e){alert(e.message||'Restaurant account could not be created.');}
+  };
+})();
+</script>
+
+</body>
+</html>
