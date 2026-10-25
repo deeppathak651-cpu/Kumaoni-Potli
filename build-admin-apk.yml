@@ -1,0 +1,74 @@
+name: Build Kumaoni Potli Admin APK
+
+on:
+  workflow_dispatch:
+  push:
+    paths:
+      - "admin.html"
+      - ".github/workflows/build-admin-apk.yml"
+    branches:
+      - main
+      - master
+
+permissions:
+  contents: read
+
+jobs:
+  build-admin-apk:
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+
+      - name: Set up Java
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: "17"
+
+      - name: Check admin.html exists
+        run: test -f admin.html
+
+      - name: Prepare Capacitor Android app
+        run: |
+          set -euo pipefail
+          mkdir -p admin-apk-build/www
+          cp admin.html admin-apk-build/www/index.html
+          # Copy any repository assets used by admin.html (images/scripts/styles).
+          rsync -a ./ admin-apk-build/www/ \
+            --exclude='.git/' \
+            --exclude='.github/' \
+            --exclude='node_modules/' \
+            --exclude='admin-apk-build/' \
+            --exclude='apk-output/' \
+            --exclude='android/' \
+            --exclude='ios/'
+          cp admin.html admin-apk-build/www/index.html
+
+          cd admin-apk-build
+          npm init -y
+          npm install --no-audit --no-fund @capacitor/core@6.2.1 @capacitor/cli@6.2.1 @capacitor/android@6.2.1
+          npx cap init "Kumaoni Potli Admin" "com.kumaonipotli.admin" --web-dir=www
+          npx cap add android
+          npx cap sync android
+
+      - name: Build debug APK
+        working-directory: admin-apk-build/android
+        run: |
+          chmod +x gradlew
+          ./gradlew --no-daemon assembleDebug
+
+      - name: Upload Admin APK
+        uses: actions/upload-artifact@v4
+        with:
+          name: kumaoni-potli-admin-apk
+          path: admin-apk-build/android/app/build/outputs/apk/debug/app-debug.apk
+          if-no-files-found: error
+          retention-days: 14
