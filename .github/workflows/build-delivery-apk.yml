@@ -5,6 +5,7 @@ on:
   push:
     paths:
       - "delivery.html"
+      - "delivery-icon.png"
       - ".github/workflows/build-delivery-apk.yml"
     branches:
       - main
@@ -12,12 +13,14 @@ on:
 
 env:
   HTML_FILE: delivery.html
+  ICON_FILE: delivery-icon.png
   APP_NAME: Kumaoni Potli Delivery
   APP_ID: com.kumaonipotli.delivery
   OUT_NAME: kumaoni-delivery
+  TAG_NAME: delivery-latest
 
 permissions:
-  contents: read
+  contents: write
 
 jobs:
   build-apk:
@@ -69,6 +72,21 @@ jobs:
           M=android/app/src/main/AndroidManifest.xml
           sed -i 's|</manifest>|    <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION" />\n    <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION" />\n</manifest>|' "$M"
 
+      - name: Generate app icon
+        continue-on-error: true
+        shell: bash
+        run: |
+          set -euo pipefail
+          if [ ! -f "$ICON_FILE" ]; then
+            echo "No $ICON_FILE found, using default icon"
+            exit 0
+          fi
+          sudo apt-get install -y imagemagick
+          mkdir -p apk-build/assets
+          convert "$ICON_FILE" -background white -gravity center -resize 1024x1024 -extent 1024x1024 apk-build/assets/icon-only.png
+          cd apk-build
+          npx --yes @capacitor/assets@3.0.5 generate --android --iconBackgroundColor '#ffffff'
+
       - name: Build debug APK
         shell: bash
         run: |
@@ -84,8 +102,14 @@ jobs:
           mkdir -p apk-output
           cp apk-build/android/app/build/outputs/apk/debug/app-debug.apk "apk-output/$OUT_NAME.apk"
 
-      - name: Upload APK
-        uses: actions/upload-artifact@v4
-        with:
-          name: ${{ env.OUT_NAME }}-apk
-          path: apk-output/${{ env.OUT_NAME }}.apk
+      - name: Publish APK to Releases
+        shell: bash
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          gh release delete "$TAG_NAME" --cleanup-tag --yes || true
+          gh release create "$TAG_NAME" "apk-output/$OUT_NAME.apk" \
+            --target "$GITHUB_SHA" \
+            --title "$APP_NAME (latest)" \
+            --notes "Debug APK built from commit $GITHUB_SHA"
