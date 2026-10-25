@@ -1,0 +1,71 @@
+name: Build Kumaoni Potli Delivery APK
+
+on:
+  workflow_dispatch:
+  push:
+    paths:
+      - "delivery.html"
+      - ".github/workflows/build-delivery-apk.yml"
+    branches:
+      - main
+      - master
+
+permissions:
+  contents: read
+
+jobs:
+  build-delivery-apk:
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+
+      - name: Set up Java
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: "17"
+
+      - name: Check delivery.html exists
+        run: test -f delivery.html
+
+      - name: Prepare Capacitor Android app
+        shell: bash
+        run: | set -euo pipefail mkdir -p delivery-apk-build/www 
+          # Copy repository assets that delivery.html may reference.
+          rsync -a ./ delivery-apk-build/www/ \
+            --exclude='.git/' \
+            --exclude='.github/' \
+            --exclude='node_modules/' \
+            --exclude='delivery-apk-build/' \
+            --exclude='apk-output/' \
+            --exclude='android/' \
+            --exclude='ios/'
+
+          # Capacitor loads this file as the app's start page.
+          cp delivery.html delivery-apk-build/www/index.html
+
+          cd delivery-apk-build
+          npm init -y
+          npm install --no-audit --no-fund @capacitor/core@6.2.1 @capacitor/cli@6.2.1 @capacitor/android@6.2.1
+          npx cap init "Kumaoni Potli Delivery" "com.kumaonipotli.delivery" --web-dir=www
+          npx cap add android
+          npx cap sync android
+
+      - name: Build debug APK
+        working-directory: delivery-apk-build/android
+        run: | chmod +x gradlew ./gradlew --no-daemon assembleDebug 
+      - name: Upload Delivery APK
+        uses: actions/upload-artifact@v4
+        with:
+          name: kumaoni-potli-delivery-apk
+          path: delivery-apk-build/android/app/build/outputs/apk/debug/app-debug.apk
+          if-no-files-found: error
+          retention-days: 14
