@@ -5,16 +5,24 @@ on:
   push:
     paths:
       - "restaurant.html"
+      - "restaurant-icon.png"
       - ".github/workflows/build-restaurant-apk.yml"
     branches:
       - main
       - master
 
+env:
+  HTML_FILE: restaurant.html
+  ICON_FILE: restaurant-icon.png
+  APP_NAME: Kumaoni Potli Restaurant
+  APP_ID: com.kumaonipotli.restaurant
+  OUT_NAME: kumaoni-restaurant
+
 permissions:
   contents: read
 
 jobs:
-  build-restaurant-apk:
+  build-apk:
     runs-on: ubuntu-latest
     timeout-minutes: 45
 
@@ -33,39 +41,68 @@ jobs:
           distribution: temurin
           java-version: "17"
 
-      - name: Check restaurant.html exists
-        run: test -f restaurant.html
+      - name: Check html exists
+        run: test -f "$HTML_FILE"
 
       - name: Prepare Capacitor Android app
         shell: bash
-        run: | set -euo pipefail mkdir -p restaurant-apk-build/www 
-          # Copy repository assets that restaurant.html may reference.
-          rsync -a ./ restaurant-apk-build/www/ \
+        run: |
+          set -euo pipefail
+          mkdir -p apk-build/www
+
+          rsync -a ./ apk-build/www/ \
             --exclude='.git/' \
             --exclude='.github/' \
             --exclude='node_modules/' \
-            --exclude='restaurant-apk-build/' \
+            --exclude='apk-build/' \
             --exclude='apk-output/' \
             --exclude='android/' \
             --exclude='ios/'
 
-          # Capacitor loads this file as the app's start page.
-          cp restaurant.html restaurant-apk-build/www/index.html
+          cp "$HTML_FILE" apk-build/www/index.html
 
-          cd restaurant-apk-build
+          cd apk-build
           npm init -y
           npm install --no-audit --no-fund @capacitor/core@6.2.1 @capacitor/cli@6.2.1 @capacitor/android@6.2.1
-          npx cap init "Kumaoni Potli Restaurant" "com.kumaonipotli.restaurant" --web-dir=www
+          npx cap init "$APP_NAME" "$APP_ID" --web-dir=www
           npx cap add android
           npx cap sync android
 
+          M=android/app/src/main/AndroidManifest.xml
+          sed -i 's|</manifest>|    <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION" />\n    <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION" />\n</manifest>|' "$M"
+
+      - name: Generate app icon
+        shell: bash
+        run: |
+          set -euo pipefail
+          if [ ! -f "$ICON_FILE" ]; then
+            echo "No $ICON_FILE found, using default icon"
+            exit 0
+          fi
+          cd apk-build
+          mkdir -p assets
+          npm install --no-audit --no-fund sharp
+          node -e "require('sharp')(process.argv[1]).resize(1024,1024,{fit:'contain',background:'#ffffff'}).flatten({background:'#ffffff'}).png().toFile('assets/icon-only.png').then(()=>console.log('icon ok'))" "../$ICON_FILE"
+          npx --yes @capacitor/assets@3.0.5 generate --android --iconBackgroundColor '#ffffff'
+          rm -rf android/app/src/main/res/mipmap-anydpi-v26
+
       - name: Build debug APK
-        working-directory: restaurant-apk-build/android
-        run: | chmod +x gradlew ./gradlew --no-daemon assembleDebug 
-      - name: Upload Restaurant APK
-        uses: actions/upload-artifact@v4
+        shell: bash
+        run: |
+          set -euo pipefail
+          cd apk-build/android
+          chmod +x gradlew
+          ./gradlew assembleDebug --no-daemon
+
+      - name: Collect APK
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p apk-output
+          cp apk-build/android/app/build/outputs/apk/debug/app-debug.apk "apk-output/$OUT_NAME.apk"
+
+      - name: Upload APK
+        uses: actions/upload-artifact@v7
         with:
-          name: kumaoni-potli-restaurant-apk
-          path: restaurant-apk-build/android/app/build/outputs/apk/debug/app-debug.apk
-          if-no-files-found: error
-          retention-days: 14
+          path: apk-output/${{ env.OUT_NAME }}.apk
+          archive: false
