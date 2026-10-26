@@ -215,14 +215,14 @@ function goHome(){openView('home')}
 function closeModal(){document.getElementById('modal').classList.remove('show')}
 function modal(title,body){document.getElementById('modalTitle').textContent=title;document.getElementById('modalBody').innerHTML=body;document.getElementById('modal').classList.add('show')}
 function selectPanel(v){if(!v)return;if(v==='admin'){goHome();return}toast(v+' selected — connect its panel to the same backend for live multi-panel sync.')}
-function table(data,cols,actions=true){if(!data.length)return '<div class="empty">No records yet.</div>';return '<div class="table-wrap"><table><thead><tr>'+cols.map(c=>'<th>'+c[1]+'</th>').join('')+(actions?'<th>Actions</th>':'')+'</tr></thead><tbody>'+data.map(r=>'<tr>'+cols.map(c=>'<td>'+esc(r[c[0]])+'</td>').join('')+(actions?'<td><button class="action" onclick="editRecord(\''+r.id+'\')">Edit</button><button class="action danger" onclick="deleteRecord(\''+r.id+'\')">Delete</button></td>':'')+'</tr>').join('')+'</tbody></table></div>'}
+function table(data,cols,actions=true){if(!data.length)return '<div class="empty">No records yet.</div>';return '<div class="table-wrap"><table><thead><tr>'+cols.map(c=>'<th>'+c[1]+'</th>').join('')+(actions?'<th>Actions</th>':'')+'</tr></thead><tbody>'+data.map(r=>'<tr>'+cols.map(c=>'<td>'+(c[0]==='imageUrl'?(r[c[0]]?'<img src="'+esc(r[c[0]])+'" alt="" style="width:52px;height:52px;object-fit:cover;border-radius:8px" onerror="this.replaceWith(document.createTextNode(\'Link not working\'))">':'—'):esc(r[c[0]]))+'</td>').join('')+(actions?'<td><button class="action" onclick="editRecord(\''+r.id+'\')">Edit</button><button class="action danger" onclick="deleteRecord(\''+r.id+'\')">Delete</button></td>':'')+'</tr>').join('')+'</tbody></table></div>'}
 let currentCollection='';
 const configs={
 menu:{title:'Food Item',fields:[
 ['name','Food Name','text',true],['category','Category','select',true,['Kumaoni Thali','Roti','Sabzi','Dal','Rice','Snacks','Sweets','Beverages','Combo Meal','Other']],
 ['price','Price (₹)','number',true],['description','Food Description','textarea'],['imageUrl','Food Image URL','url'],['foodType','Food Type','select',false,['Veg','Non-Veg','Vegan','Jain']],
 ['prepTime','Preparation Time (minutes)','number'],['available','Availability','select',false,['Available','Unavailable']],['stock','Stock Quantity','number'],['restaurant','Restaurant Name','text'],['tags','Tags / Ingredients','text']
-],cols:[['name','Food'],['category','Category'],['price','Price ₹'],['foodType','Type'],['available','Availability']]},
+],cols:[['imageUrl','Photo'],['name','Food'],['category','Category'],['price','Price ₹'],['foodType','Type'],['available','Availability']]},
 restaurants:{title:'Restaurant Partner',fields:[
 ['name','Restaurant Name','text',true],['owner','Owner / Manager Name','text'],['phone','Phone Number','tel',true],['email','Email Address','email'],['address','Full Address','textarea',true],['area','Service Area','text'],['openingHours','Opening Hours','text'],['commission','Commission (%)','number'],['status','Approval Status','select',false,['Pending','Approved','Rejected','Suspended']]
 ],cols:[['name','Restaurant'],['owner','Owner'],['phone','Phone'],['area','Area'],['status','Status']]},
@@ -245,6 +245,7 @@ function fieldHtml(f,old){
  if(type==='select'){control='<select id="f_'+key+'" '+(required?'required':'')+'>'+((f[4]||[]).map(v=>'<option value="'+esc(v)+'" '+(String(val)===v?'selected':'')+'>'+esc(v)+'</option>').join(''))+'</select>'}
  else if(type==='textarea'){control='<textarea id="f_'+key+'" rows="3" '+(required?'required':'')+'>'+esc(val)+'</textarea>'}
  else {control='<input id="f_'+key+'" type="'+type+'" value="'+esc(val)+'" '+(required?'required':'')+(type==='number'?' min="0" step="any"':'')+'>'}
+ if(type==='url'){control=control.replace('<input ','<input oninput="var p=document.getElementById(\'pv_'+key+'\');p.src=this.value;p.style.display=this.value?\'block\':\'none\'" ')+'<img id="pv_'+key+'" src="'+esc(val)+'" alt="" style="display:'+(val?'block':'none')+';max-width:100%;max-height:150px;margin-top:8px;border-radius:10px;object-fit:cover" onerror="this.style.display=\'none\'" onload="this.style.display=\'block\'">'}
  return '<div class="'+(['description','address','notes'].includes(key)?'full':'')+'"><label for="f_'+key+'">'+label+(required?' *':'')+'</label>'+control+'</div>';
 }
 function openSimpleForm(col,editId=null){currentCollection=col;const c=configs[col],old=editId?db[col].find(x=>x.id===editId):{};modal((editId?'Edit ':'Add ')+c.title,'<form id="recordForm" onsubmit="event.preventDefault();saveSimple(\''+col+'\',\''+(editId||'')+'\')"><div class="form-grid">'+c.fields.map(f=>fieldHtml(f,old)).join('')+'</div><br><button class="action" type="submit">Save '+esc(c.title)+'</button><button class="action secondary" type="button" onclick="closeModal()">Cancel</button></form>')}
@@ -349,5 +350,132 @@ function requireAdminLogin(){
 renderAll();
 requireAdminLogin();
 </script>
+<script>
+(function(){
+const st=document.createElement('style');
+st.textContent='.mc{display:flex;gap:11px;padding:11px;border:1px solid #e4eae2;border-radius:14px;margin-top:10px;background:#fff;text-align:left}.mc img,.mc .mph{width:78px;height:78px;border-radius:11px;object-fit:cover;flex:none;background:#eef3ea;display:grid;place-items:center;font-size:30px}.mc h4{margin:0 0 3px;font-size:15px}.mc small{color:#6a7b72}.chip{display:inline-block;background:#eef5e9;color:#2b623b;border-radius:14px;padding:3px 8px;font-size:11px;margin:3px 3px 0 0;font-weight:700}.stk{display:inline-flex;align-items:center;gap:8px;margin:6px 0}.stk button{width:32px;height:32px;border-radius:8px;border:1px solid #cfd8cc;background:#f6f9f3;font-size:18px;font-weight:800}.mc .row2 button.action{padding:7px 10px;font-size:12px;margin:3px 3px 0 0}.low{color:#c93636;font-weight:800}.vrow{display:flex;gap:6px;margin-top:6px}.vrow input{flex:1;min-width:0}.fbar{display:flex;gap:8px;margin-top:10px;flex-wrap:wrap}.fbar input,.fbar select{flex:1;min-width:130px;padding:10px;border:1px solid #d8e0d5;border-radius:10px}';
+document.head.appendChild(st);
+const num=v=>Number(v)||0;
+configs.menu.fields.splice(3,0,['unit','Unit','select',false,['Plate','Piece','Half Plate','Full Plate','Bowl','Glass','Packet','Kg','500 g','250 g']],['discountPrice','Offer Price ₹ (optional)','number']);
+
+/* ---------- Cloud sync (Firestore: foods) ---------- */
+function foodDoc(m){const p=num(m.price),o=num(m.discountPrice)||p;return{id:m.id,name:m.name||'',category:m.category||'',price:o,regular:p,regularPrice:p,discount:p-o,discountPrice:o,description:m.description||'',image:m.imageUrl||'',imageUrl:m.imageUrl||'',foodType:m.foodType||'Veg',unit:m.unit||'',variants:m.variants||[],stock:num(m.stock),prepTime:num(m.prepTime),tags:m.tags||'',restaurantName:m.restaurant||'Kumaoni Potli',available:m.available!=='Unavailable',status:m.available==='Unavailable'?'Unavailable':'Available',source:'admin',updatedAt:firebase.firestore.FieldValue.serverTimestamp()}}
+async function cloudSave(m){try{await firebaseDb.collection('foods').doc(m.id).set(foodDoc(m),{merge:true})}catch(e){toast('Saved here, cloud sync failed: '+(e.code||e.message))}}
+async function cloudDelete(fid){try{await firebaseDb.collection('foods').doc(fid).delete()}catch(e){toast('Deleted here, cloud delete failed')}}
+window.loadCloud=async function(quiet){try{const s=await firebaseDb.collection('foods').where('source','==','admin').get();let n=0;s.forEach(d=>{const x=d.data();if(!db.menu.find(m=>m.id===d.id)){db.menu.push({id:d.id,name:x.name,category:x.category,price:x.regular||x.price,discountPrice:x.discount>0?x.price:'',description:x.description,imageUrl:x.imageUrl||x.image,foodType:x.foodType,unit:x.unit,variants:x.variants||[],stock:x.stock,prepTime:x.prepTime,tags:x.tags,restaurant:x.restaurantName,available:x.available===false?'Unavailable':'Available'});n++}});if(n){save();renderAll()}if(!quiet)toast(n?n+' items loaded from cloud':'Cloud is up to date')}catch(e){if(!quiet)toast('Cloud load failed: '+(e.code||e.message))}};
+
+/* ---------- Quantity / size options in the form ---------- */
+function vrow(l,p){return '<div class="vrow"><input class="vl" placeholder="Option e.g. Half / Full / 500g" value="'+esc(l||'')+'"><input class="vp" type="number" min="0" placeholder="Price ₹" value="'+esc(p==null?'':p)+'"><button type="button" class="action danger" style="margin:0;padding:6px 10px" onclick="this.parentNode.remove()">✕</button></div>'}
+window.addVrow=()=>document.getElementById('vbox').insertAdjacentHTML('beforeend',vrow());
+const _open=openSimpleForm;
+openSimpleForm=function(col,editId=null){_open(col,editId);if(col!=='menu')return;const old=editId?db.menu.find(x=>x.id===editId):null;document.querySelector('#recordForm .form-grid').insertAdjacentHTML('beforeend','<div class="full"><label>Quantity / Size Options (optional)</label><small style="color:#6a7b72">Jaise Half ₹80, Full ₹140. Jitne chaho utne jodo.</small><div id="vbox">'+((old&&old.variants)||[]).map(v=>vrow(v.label,v.price)).join('')+'</div><button type="button" class="action secondary" style="margin:8px 0 0" onclick="addVrow()">＋ Add Quantity Option</button></div>')};
+const _save=saveSimple;
+saveSimple=function(col,editId){
+ if(col!=='menu')return _save(col,editId);
+ const vs=[...document.querySelectorAll('#vbox .vrow')].map(r=>({label:r.querySelector('.vl').value.trim(),price:num(r.querySelector('.vp').value)})).filter(v=>v.label);
+ _save(col,editId);
+ if(document.getElementById('modal').classList.contains('show'))return;
+ const m=editId?db.menu.find(x=>x.id===editId):db.menu[db.menu.length-1];
+ if(!m)return;m.variants=vs;save();renderAll();cloudSave(m)};
+const _del=deleteRecord;
+deleteRecord=function(rid){const c=currentCollection,n=db[c].length;_del(rid);if(c==='menu'&&db.menu.length<n)cloudDelete(rid)};
+
+/* ---------- Menu cards: edit, delete, stock +/-, availability, copy ---------- */
+window.adjStock=(fid,d)=>{const m=db.menu.find(x=>x.id===fid);if(!m)return;m.stock=Math.max(0,num(m.stock)+d);if(m.stock===0)m.available='Unavailable';else if(d>0&&m.available==='Unavailable')m.available='Available';save();renderAll();cloudSave(m)};
+window.toggleAvail=fid=>{const m=db.menu.find(x=>x.id===fid);if(!m)return;m.available=m.available==='Unavailable'?'Available':'Unavailable';save();log((m.available)+': '+m.name);renderAll();cloudSave(m)};
+window.dupFood=fid=>{const m=db.menu.find(x=>x.id===fid);if(!m)return;const c=JSON.parse(JSON.stringify(m));c.id=id();c.name+=' (copy)';db.menu.push(c);save();log('Duplicated food: '+m.name);renderAll();cloudSave(c);toast('Copy ban gayi, Edit karke badlo')};
+window.renderMenu=function(){
+ const q=((document.getElementById('mq')||{}).value||'').toLowerCase(),cat=(document.getElementById('mcat')||{}).value||'';
+ const list=db.menu.filter(m=>(!q||((m.name||'')+' '+(m.tags||'')+' '+(m.category||'')).toLowerCase().includes(q))&&(!cat||m.category===cat));
+ const has=m=>m.stock!==''&&m.stock!=null;
+ const low=db.menu.filter(m=>has(m)&&num(m.stock)>0&&num(m.stock)<=5).length,out=db.menu.filter(m=>m.available==='Unavailable'||(has(m)&&num(m.stock)===0)).length;
+ document.getElementById('msum').innerHTML='Total <b>'+db.menu.length+'</b> · Low stock <b class="low">'+low+'</b> · Unavailable <b>'+out+'</b>';
+ document.getElementById('menuTable').innerHTML=list.length?list.map(m=>{const lw=has(m)&&num(m.stock)<=5;
+  return '<div class="mc">'+(m.imageUrl?'<img src="'+esc(m.imageUrl)+'" alt="" onerror="this.outerHTML=\'<div class=mph>🍲</div>\'">':'<div class="mph">🍲</div>')+
+  '<div style="flex:1;min-width:0"><h4>'+esc(m.name)+'</h4><small>'+esc(m.category)+' · '+esc(m.foodType||'')+(m.unit?' · '+esc(m.unit):'')+'</small>'+
+  '<div>'+(num(m.discountPrice)?'<b>₹'+num(m.discountPrice)+'</b> <s style="color:#999">₹'+num(m.price)+'</s>':'<b>₹'+num(m.price)+'</b>')+'</div>'+
+  (m.variants||[]).map(v=>'<span class="chip">'+esc(v.label)+' ₹'+num(v.price)+'</span>').join('')+
+  '<div class="stk"><button onclick="adjStock(\''+m.id+'\',-1)">−</button><span>Stock: <b'+(lw?' class="low"':'')+'>'+(has(m)?m.stock:'—')+'</b></span><button onclick="adjStock(\''+m.id+'\',1)">+</button></div>'+
+  '<div class="row2"><span class="badge">'+esc(m.available||'Available')+'</span><br>'+
+  '<button class="action" onclick="currentCollection=\'menu\';editRecord(\''+m.id+'\')">Edit</button>'+
+  '<button class="action danger" onclick="currentCollection=\'menu\';deleteRecord(\''+m.id+'\')">Delete</button>'+
+  '<button class="action gold" onclick="toggleAvail(\''+m.id+'\')">'+(m.available==='Unavailable'?'Make Available':'Mark Unavailable')+'</button>'+
+  '<button class="action secondary" onclick="dupFood(\''+m.id+'\')">Copy</button></div></div></div>'}).join(''):'<div class="empty">No food items found.</div>'};
+
+/* ---------- Search box for every list ---------- */
+const lists=['ordersTable','restaurantTable','deliveryTable','customerTable','userTable','offerTable'];
+window.gsFilter=(tid,v)=>{v=v.toLowerCase();document.querySelectorAll('#'+tid+' tbody tr').forEach(r=>r.style.display=r.textContent.toLowerCase().includes(v)?'':'none')};
+lists.forEach(t=>{const e=document.getElementById(t);if(e)e.insertAdjacentHTML('beforebegin','<div class="fbar"><input id="gs_'+t+'" placeholder="🔍 Search..." oninput="gsFilter(\''+t+'\',this.value)"></div>')});
+const mt=document.getElementById('menuTable');
+mt.insertAdjacentHTML('beforebegin','<div id="msum" style="margin-top:8px;font-size:13px"></div><div class="fbar"><input id="mq" placeholder="🔍 Search food..." oninput="renderMenu()"><select id="mcat" onchange="renderMenu()"><option value="">All categories</option>'+configs.menu.fields[1][4].map(c=>'<option>'+esc(c)+'</option>').join('')+'</select></div>');
+const tb=document.querySelector('#menu .toolbar');if(tb)tb.insertAdjacentHTML('beforeend','<button class="action secondary" onclick="loadCloud()">☁ Sync from Cloud</button>');
+
+const _ra=renderAll;
+renderAll=function(){_ra();renderMenu();lists.forEach(t=>{const e=document.getElementById('gs_'+t);if(e&&e.value)gsFilter(t,e.value)})};
+const _h=hideAdminLogin;hideAdminLogin=function(){_h();loadCloud(true)};
+renderAll();
+})();
+</script>
+
+<script>
+(function(){
+const num=v=>Number(v)||0, ST=['New','Preparing','Ready','Out for Delivery','Delivered','Cancelled'];
+let live=[],liveErr='',first=true,unsub=null;
+const od=o=>{const c=o.createdAt;return c&&c.toDate?c.toDate():new Date(c||o.date||0)};
+const tot=o=>num(o.total||o.grandTotal||o.amount);
+const css=document.createElement('style');
+css.textContent='.oc{border:1px solid #e4eae2;border-radius:14px;padding:12px;margin-top:10px;background:#fff;text-align:left;font-size:13px}.oc h4{margin:0 0 4px;font-size:15px}.oc select{padding:8px;border:1px solid #d8e0d5;border-radius:8px;margin:4px 6px 0 0;max-width:100%}.oc a.action{display:inline-block;text-decoration:none;padding:7px 10px;font-size:12px}.bars{display:flex;align-items:flex-end;gap:6px;height:110px;margin-top:8px}.bars div{flex:1;text-align:center;font-size:10px;color:#6a7b72}.bars i{display:block;background:#174632;border-radius:5px 5px 0 0;min-height:2px}.tp{display:flex;justify-content:space-between;padding:6px 0;border-bottom:1px solid #eef1ec;font-size:13px}';
+document.head.appendChild(css);
+
+/* ---------- Live orders from customer app ---------- */
+document.getElementById('ordersTable').insertAdjacentHTML('beforebegin','<h3 style="text-align:left;margin:14px 0 0">🔴 Live Orders (Customer App)</h3><div class="fbar"><select id="lof" onchange="renderLive()"><option value="">All status</option>'+ST.map(s=>'<option>'+s+'</option>').join('')+'</select><input id="loq" placeholder="🔍 Name / phone / order id" oninput="renderLive()"></div><div id="liveBox"></div><h3 style="text-align:left;margin:18px 0 0">Manual Orders</h3>');
+window.renderLive=function(){
+ const b=document.getElementById('liveBox');if(!b)return;
+ if(liveErr){b.innerHTML='<div class="empty">Live orders load nahi hue: '+esc(liveErr)+'<br>Admin login karo aur Firestore Rules check karo.</div>';return}
+ const f=document.getElementById('lof').value,q=document.getElementById('loq').value.toLowerCase();
+ const L=live.filter(o=>(!f||o.status===f)&&(!q||((o.customerName||'')+(o.customerPhone||'')+(o.orderId||o.id||'')).toLowerCase().includes(q)));
+ const names=db.delivery.map(d=>d.name);
+ b.innerHTML=L.length?L.map(o=>{const dp=o.deliveryPartner||'',opts=(names.includes(dp)||!dp?names:names.concat(dp));
+  const items=(o.items||[]).map(i=>esc(i.name||i.title||'Item')+' × '+(i.qty||i.quantity||1)).join('<br>');
+  return '<div class="oc"><h4>#'+esc(String(o.orderId||o.id||o.docId).slice(-8))+' · ₹'+tot(o)+'</h4><small>'+esc(od(o).toLocaleString('en-IN'))+' · '+esc(o.payment||'')+'</small><div style="margin-top:6px"><b>'+esc(o.customerName||'')+'</b> · '+esc(o.customerPhone||'')+'<br>'+esc(o.customerAddress||'')+'</div><div style="margin-top:6px;color:#44574d">'+items+'</div>'+
+  '<div style="margin-top:4px;color:#6a7b72">Items ₹'+num(o.itemTotal)+' · Delivery ₹'+num(o.deliveryFee||o.delivery)+(num(o.discount)?' · Discount −₹'+num(o.discount):'')+'</div>'+
+  '<select onchange="setOrder(\''+o.docId+'\',{status:this.value})">'+ST.map(s=>'<option'+(o.status===s?' selected':'')+'>'+s+'</option>').join('')+'</select>'+
+  '<select onchange="setOrder(\''+o.docId+'\',{deliveryPartner:this.value})"><option value="">Assign delivery…</option>'+opts.map(n=>'<option'+(dp===n?' selected':'')+'>'+esc(n)+'</option>').join('')+'</select><br>'+
+  (o.customerPhone?'<a class="action" href="tel:'+esc(o.customerPhone)+'">📞 Call</a>':'')+'<button class="action secondary" onclick="copyOrder(\''+o.docId+'\')">Copy details</button></div>'}).join(''):'<div class="empty">Abhi koi live order nahi.</div>'};
+window.setOrder=async(docId,patch)=>{try{await firebaseDb.collection('orders').doc(docId).update(Object.assign({},patch,{updatedAt:firebase.firestore.FieldValue.serverTimestamp()}));log('Order '+docId.slice(-6)+' updated: '+JSON.stringify(patch));toast('Order updated')}catch(e){toast('Update failed: '+(e.code||e.message))}};
+window.copyOrder=docId=>{const o=live.find(x=>x.docId===docId);if(!o)return;const t='Order #'+(o.orderId||o.id)+'\n'+(o.customerName||'')+' '+(o.customerPhone||'')+'\n'+(o.customerAddress||'')+'\n'+(o.items||[]).map(i=>(i.name||'')+' x'+(i.qty||i.quantity||1)).join('\n')+'\nTotal ₹'+tot(o)+' ('+(o.payment||'')+')';try{navigator.clipboard.writeText(t);toast('Copied')}catch(e){toast('Copy not supported')}};
+function beep(){try{const c=new(window.AudioContext||window.webkitAudioContext)(),o=c.createOscillator();o.connect(c.destination);o.frequency.value=880;o.start();setTimeout(()=>{o.stop();c.close()},350)}catch(e){}}
+function listen(){if(unsub)return;try{unsub=firebaseDb.collection('orders').onSnapshot(s=>{live=s.docs.map(d=>Object.assign({},d.data(),{docId:d.id})).sort((a,b)=>od(b)-od(a));liveErr='';if(!first)s.docChanges().forEach(c=>{if(c.type==='added'){toast('🔔 New order: '+(c.doc.data().customerName||''));beep();navigator.vibrate&&navigator.vibrate(300)}});first=false;renderLive();renderDash()},e=>{liveErr=e.code||e.message;renderLive()})}catch(e){liveErr=e.message;renderLive()}}
+
+/* ---------- Dashboard analytics ---------- */
+document.querySelector('#dashboard .stats').insertAdjacentHTML('afterend','<div id="dashX"></div>');
+window.renderDash=function(){
+ const A=live.concat(db.orders.map(o=>({status:o.status,total:o.amount,createdAt:o.date,items:[]}))),ok=A.filter(o=>o.status!=='Cancelled'),today=new Date().toDateString();
+ const T=ok.filter(o=>od(o).toDateString()===today),rev=T.reduce((a,o)=>a+tot(o),0),pend=A.filter(o=>['New','Preparing','Ready','Out for Delivery'].includes(o.status)).length;
+ const days=[...Array(7)].map((_,i)=>{const d=new Date();d.setDate(d.getDate()-6+i);const s=ok.filter(o=>od(o).toDateString()===d.toDateString()).reduce((a,o)=>a+tot(o),0);return{l:d.toLocaleDateString('en-IN',{weekday:'short'}),s}}),mx=Math.max(1,...days.map(d=>d.s));
+ const cnt={};ok.forEach(o=>(o.items||[]).forEach(i=>{const n=i.name||i.title;if(n)cnt[n]=(cnt[n]||0)+num(i.qty||i.quantity||1)}));
+ const top=Object.entries(cnt).sort((a,b)=>b[1]-a[1]).slice(0,5),lowS=db.menu.filter(m=>m.stock!==''&&m.stock!=null&&num(m.stock)<=5);
+ document.getElementById('dashX').innerHTML='<div class="stats" style="margin-top:12px"><div class="stat"><b>'+T.length+'</b><small>Today Orders</small></div><div class="stat"><b>₹'+rev.toLocaleString('en-IN')+'</b><small>Today Revenue</small></div><div class="stat"><b>'+pend+'</b><small>Pending</small></div><div class="stat"><b>'+(ok.length?'₹'+Math.round(ok.reduce((a,o)=>a+tot(o),0)/ok.length):'—')+'</b><small>Avg Order</small></div></div>'+
+ '<h3 style="text-align:left;margin:16px 0 0">Last 7 days revenue</h3><div class="bars">'+days.map(d=>'<div><small>₹'+d.s+'</small><i style="height:'+Math.round(d.s/mx*80)+'px"></i>'+d.l+'</div>').join('')+'</div>'+
+ '<h3 style="text-align:left;margin:16px 0 4px">🔥 Top selling</h3>'+(top.length?top.map(t=>'<div class="tp"><span>'+esc(t[0])+'</span><b>'+t[1]+' sold</b></div>').join(''):'<div class="empty">Abhi data nahi</div>')+
+ '<h3 style="text-align:left;margin:16px 0 4px">⚠ Low / out of stock</h3>'+(lowS.length?lowS.map(m=>'<div class="tp"><span>'+esc(m.name)+'</span><b class="low">'+num(m.stock)+' left</b></div>').join(''):'<div class="empty">Sab theek hai</div>')};
+
+/* ---------- Store controls (saved in Firestore settings/store) ---------- */
+document.querySelector('#settings .content-card').insertAdjacentHTML('beforeend','<h3 style="text-align:left;margin:20px 0 0">🏪 Store Controls</h3><div class="form-grid"><div><label>Store Status</label><select id="ss_open"><option value="true">Open</option><option value="false">Closed</option></select></div><div><label>Delivery Fee ₹</label><input id="ss_fee" type="number" min="0"></div><div><label>Minimum Order ₹</label><input id="ss_min" type="number" min="0"></div><div><label>Opening Hours</label><input id="ss_hours" placeholder="9 AM - 10 PM"></div><div class="full"><label>Announcement message</label><input id="ss_msg" placeholder="Jaise: Aaj Thali par 10% off"></div></div><button class="action" onclick="saveStore()">Save Store Controls</button>');
+window.saveStore=async()=>{const v=id=>document.getElementById(id).value;try{await firebaseDb.collection('settings').doc('store').set({open:v('ss_open')==='true',deliveryFee:num(v('ss_fee')),minOrder:num(v('ss_min')),hours:v('ss_hours').trim(),announcement:v('ss_msg').trim(),updatedAt:firebase.firestore.FieldValue.serverTimestamp()},{merge:true});log('Store controls saved');toast('Store controls saved')}catch(e){toast('Save failed: '+(e.code||e.message))}};
+async function loadStore(){try{const d=await firebaseDb.collection('settings').doc('store').get();if(!d.exists)return;const x=d.data(),s=(id,v)=>document.getElementById(id).value=v;s('ss_open',String(x.open!==false));s('ss_fee',x.deliveryFee??'');s('ss_min',x.minOrder??'');s('ss_hours',x.hours||'');s('ss_msg',x.announcement||'')}catch(e){}}
+
+/* ---------- CSV export ---------- */
+window.exportCSV=col=>{const rows=col==='live'?live.map(o=>Object.assign({},o,{createdAt:od(o).toISOString(),items:(o.items||[]).map(i=>(i.name||'')+' x'+(i.qty||i.quantity||1)).join('; '),address:''})):db[col];if(!rows.length){toast('Export ke liye data nahi');return}
+ const keys=[...new Set(rows.flatMap(r=>Object.keys(r)))],q=v=>'"'+String(typeof v==='object'&&v!==null?JSON.stringify(v):v??'').replace(/"/g,'""')+'"';
+ const a=document.createElement('a');a.href=URL.createObjectURL(new Blob(['\ufeff'+keys.join(',')+'\n'+rows.map(r=>keys.map(k=>q(r[k])).join(',')).join('\n')],{type:'text/csv'}));a.download='kumaoni-'+col+'.csv';a.click();URL.revokeObjectURL(a.href)};
+[['orders','live'],['menu','menu'],['restaurants','restaurants'],['delivery','delivery'],['customers','customers'],['users','users'],['offers','offers']].forEach(([v,c])=>{const t=document.querySelector('#'+v+' .toolbar');if(t)t.insertAdjacentHTML('beforeend','<button class="action secondary" onclick="exportCSV(\''+c+'\')">⬇ CSV</button>')});
+
+const _ra=renderAll;renderAll=function(){_ra();renderLive();renderDash()};
+const _h=hideAdminLogin;hideAdminLogin=function(){_h();listen();loadStore()};
+renderAll();
+})();
+</script>
+
 </body>
 </html>
