@@ -1,0 +1,105 @@
+name: Build Kumaoni Potli Admin APK
+
+on:
+  workflow_dispatch:
+  push:
+    paths:
+      - "admin.html"
+      - "admin-icon.png"
+      - ".github/workflows/build-admin-apk.yml"
+    branches:
+      - main
+      - master
+
+env:
+  HTML_FILE: admin.html
+  ICON_FILE: admin-icon.png
+  APP_NAME: Kumaoni Potli Admin
+  APP_ID: com.kumaonipotli.admin
+  OUT_NAME: kumaoni-admin
+
+permissions:
+  contents: read
+
+jobs:
+  build-apk:
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+
+      - name: Set up Java
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: "17"
+
+      - name: Check html exists
+        run: test -f "$HTML_FILE"
+
+      - name: Prepare Capacitor Android app
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p apk-build/www
+
+          rsync -a ./ apk-build/www/ \
+            --exclude='.git/' \
+            --exclude='.github/' \
+            --exclude='node_modules/' \
+            --exclude='apk-build/' \
+            --exclude='apk-output/' \
+            --exclude='android/' \
+            --exclude='ios/'
+
+          cp "$HTML_FILE" apk-build/www/index.html
+
+          cd apk-build
+          npm init -y
+          npm install --no-audit --no-fund @capacitor/core@6.2.1 @capacitor/cli@6.2.1 @capacitor/android@6.2.1
+          npx cap init "$APP_NAME" "$APP_ID" --web-dir=www
+          npx cap add android
+          npx cap sync android
+
+      - name: Generate app icon
+        shell: bash
+        run: |
+          set -euo pipefail
+          if [ ! -f "$ICON_FILE" ]; then
+            echo "No $ICON_FILE found, using default icon"
+            exit 0
+          fi
+          cd apk-build
+          mkdir -p assets
+          npm install --no-audit --no-fund sharp
+          node -e "require('sharp')(process.argv[1]).resize(1024,1024,{fit:'contain',background:'#ffffff'}).flatten({background:'#ffffff'}).png().toFile('assets/icon-only.png').then(()=>console.log('icon ok'))" "../$ICON_FILE"
+          npx --yes @capacitor/assets@3.0.5 generate --android --iconBackgroundColor '#ffffff'
+          rm -rf android/app/src/main/res/mipmap-anydpi-v26
+
+      - name: Build debug APK
+        shell: bash
+        run: |
+          set -euo pipefail
+          cd apk-build/android
+          chmod +x gradlew
+          ./gradlew assembleDebug --no-daemon
+
+      - name: Collect APK
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p apk-output
+          cp apk-build/android/app/build/outputs/apk/debug/app-debug.apk "apk-output/$OUT_NAME.apk"
+
+      - name: Upload APK
+        uses: actions/upload-artifact@v7
+        with:
+          path: apk-output/${{ env.OUT_NAME }}.apk
+          archive: false
