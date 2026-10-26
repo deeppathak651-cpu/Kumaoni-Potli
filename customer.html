@@ -789,4 +789,45 @@ if(localStorage.getItem('kpLoggedIn')==='1' && localStorage.getItem('kpFirebaseI
   };
 })();
 </script>
+<script>
+/* Kumaoni Potli: menu + store controls from Firebase (added by admin) */
+(function(){
+const num=v=>Number(v)||0;let store={},cloud={};
+const BASE=['Aloo Ke Gutke','Mandua Roti','Jhangora Kheer','Gahat Dal'];
+function build(f){
+ const d=document.createElement('div');d.className='item cf';
+ const has=Array.isArray(f.variants)&&f.variants.length,off=f.available===false,price=num(f.price)||num(f.regularPrice),img=f.imageUrl||f.image;
+ d.innerHTML=(img?'<img src="'+esc(img)+'" alt="" style="width:100%;max-height:150px;object-fit:cover;border-radius:12px;margin-bottom:8px" onerror="this.remove()">':'')+
+ '<h3 class="menu-food-title">'+esc(f.name)+'</h3><p>₹ '+price+(num(f.regularPrice)>price?' <s>₹'+num(f.regularPrice)+'</s>':'')+' · '+esc(f.category||'Food')+(f.unit?' · '+esc(f.unit):'')+(f.foodType?' · '+esc(f.foodType):'')+'</p>'+
+ (has?'<select class="vs" style="width:100%;margin:6px 0;padding:10px;border-radius:10px">'+f.variants.map((v,i)=>'<option value="'+i+'">'+esc(v.label)+' – ₹'+num(v.price)+'</option>').join('')+'</select>':'')+
+ '<button class="ab"'+(off?' disabled':'')+'>'+(off?'Currently unavailable':'🛒 Add to Cart')+'</button>';
+ d.addEventListener('click',()=>openProduct(f.name,price));
+ d.querySelector('.ab').addEventListener('click',e=>{e.stopPropagation();if(off)return;let n=f.name,p=price;if(has){const v=f.variants[d.querySelector('.vs').value];n=f.name+' ('+v.label+')';p=num(v.price)}addToCart(n,p)});
+ const s=d.querySelector('.vs');if(s)s.addEventListener('click',e=>e.stopPropagation());
+ return d}
+function render(list){
+ const box=document.getElementById('menuItems');if(!box)return;
+ box.querySelectorAll('.cf').forEach(e=>e.remove());cloud={};
+ list.forEach(f=>{if(!f.name||BASE.includes(f.name)||/pending|reject|inactive|hidden/i.test(f.status||''))return;
+  cloud[f.name]=f;
+  productData[f.name]={price:num(f.price)||num(f.regularPrice),emoji:'🍱',sub:'🍽 '+(f.category||'Kumaoni Special'),desc:f.description||'Freshly prepared Kumaoni food, homemade with care.',ingredients:f.ingredients||'Fresh local ingredients and traditional spices.',about:f.about||f.description||'A homemade Kumaoni dish prepared fresh for you.'};
+  box.appendChild(build(f))});
+ if(typeof filterMenu==='function')filterMenu()}
+const _op=openProduct;
+openProduct=function(n,p){_op(n,p);const f=cloud[n],u=f&&(f.imageUrl||f.image);if(u)$('productEmoji').innerHTML='<img src="'+esc(u)+'" alt="" style="width:100%;max-height:220px;object-fit:cover;border-radius:14px" onerror="this.parentNode.textContent=\'🍱\'">'};
+function banner(){
+ const h=document.querySelector('#menuPage h2');if(!h)return;
+ let b=document.getElementById('storeBanner');
+ if(!b){b=document.createElement('div');b.id='storeBanner';h.insertAdjacentElement('afterend',b)}
+ const closed=store.open===false,t=closed?'⛔ Store abhi band hai'+(store.hours?' · '+store.hours:''):(store.announcement?'📢 '+store.announcement:'');
+ b.textContent=t;b.style.cssText=t?'margin:8px 0;padding:10px 12px;border-radius:10px;font-weight:700;font-size:13px;background:'+(closed?'#fde8e8;color:#b42318':'#e8f4ec;color:#174632'):'display:none'}
+const _ac=addToCart;addToCart=function(n,p){if(store.open===false){showToast('⛔ Store abhi band hai');return}_ac(n,p)};
+const _ap=addProductToCart;addProductToCart=function(){if(store.open===false){showToast('⛔ Store abhi band hai');return}_ap()};
+const _ct=cartTotals;cartTotals=function(){const t=_ct();if(store.deliveryFee!=null&&store.deliveryFee!==''&&cart.length){const d=num(store.deliveryFee);t.total=Math.max(0,t.total-t.delivery+d);t.delivery=d}return t};
+try{firebaseDb.collection('foods').onSnapshot(s=>render(s.docs.map(d=>Object.assign({id:d.id},d.data()))),()=>{})}catch(e){}
+try{firebaseDb.collection('settings').doc('store').onSnapshot(d=>{store=d.exists?d.data():{};banner()},()=>{})}catch(e){}
+banner();
+})();
+</script>
+
 </body></html>
