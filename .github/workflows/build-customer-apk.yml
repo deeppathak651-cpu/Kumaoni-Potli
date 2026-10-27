@@ -1,3 +1,4 @@
+
 name: Build Kumaoni Potli Customer APK
 
 on:
@@ -63,7 +64,7 @@ jobs:
 
           cd apk-build
           npm init -y
-          npm install --no-audit --no-fund @capacitor/core@6.2.1 @capacitor/cli@6.2.1 @capacitor/android@6.2.1
+          npm install --no-audit --no-fund @capacitor/core@6.2.1 @capacitor/cli@6.2.1 @capacitor/android@6.2.1 @capacitor/app@6
           npx cap init "$APP_NAME" "$APP_ID" --web-dir=www
           npx cap add android
           npx cap sync android
