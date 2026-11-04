@@ -1,4 +1,3 @@
-
 name: Build Kumaoni Potli Customer APK
 
 on:
@@ -70,7 +69,15 @@ jobs:
           npx cap sync android
 
           M=android/app/src/main/AndroidManifest.xml
-          sed -i 's|</manifest>|    <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION" />\n    <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION" />\n</manifest>|' "$M"
+          sed -i 's|</manifest>| <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION" />\n <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION" />\n</manifest>|' "$M"
+
+      - name: Use live GitHub Pages URL
+        shell: bash
+        run: |
+          set -euo pipefail
+          cd apk-build
+          node -e "const fs=require('fs');const f='capacitor.config.json';const c=JSON.parse(fs.readFileSync(f,'utf8'));c.server={url:'https://deeppathak651-cpu.github.io/Kumaoni-Potli/customer.html',androidScheme:'https'};fs.writeFileSync(f,JSON.stringify(c,null,2))"
+          npx cap sync android
 
       - name: Generate app icon
         shell: bash
