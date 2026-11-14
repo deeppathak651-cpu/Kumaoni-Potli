@@ -71,12 +71,21 @@ jobs:
           M=android/app/src/main/AndroidManifest.xml
           sed -i 's|</manifest>| <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION" />\n <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION" />\n</manifest>|' "$M"
 
+      - name: Allow app to see and open UPI apps
+        shell: bash
+        run: |
+          set -euo pipefail
+          cd apk-build
+          M=android/app/src/main/AndroidManifest.xml
+          sed -i 's|</manifest>| <queries>\n  <intent><action android:name="android.intent.action.VIEW" /><data android:scheme="upi" /></intent>\n  <package android:name="com.google.android.apps.nbu.paisa.user" />\n  <package android:name="com.phonepe.app" />\n  <package android:name="net.one97.paytm" />\n  <package android:name="in.org.npci.upiapp" />\n </queries>\n</manifest>|' "$M"
+          grep -c "<queries>" "$M"
+
       - name: Use live GitHub Pages URL
         shell: bash
         run: |
           set -euo pipefail
           cd apk-build
-          node -e "const fs=require('fs');const f='capacitor.config.json';const c=JSON.parse(fs.readFileSync(f,'utf8'));c.server={url:'https://deeppathak651-cpu.github.io/Kumaoni-Potli/customer.html',androidScheme:'https'};fs.writeFileSync(f,JSON.stringify(c,null,2))"
+          node -e "const fs=require('fs');const f='capacitor.config.json';const c=JSON.parse(fs.readFileSync(f,'utf8'));c.server={url:'https://deeppathak651-cpu.github.io/Kumaoni-Potli/customer.html',androidScheme:'https'};c.android=Object.assign({},c.android,{overrideUserAgent:'Mozilla/5.0 (Linux; Android 13; Mobile) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Mobile Safari/537.36'});fs.writeFileSync(f,JSON.stringify(c,null,2))"
           npx cap sync android
 
       - name: Generate app icon
